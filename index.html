@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elfboi — studio for utility apps with art in mind</title>
+  <meta name="description" content="elfboi is a studio for utility apps with art in mind — for audio and other curious places." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,500;1,9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+
+  <main>
+    <nav>
+      <a class="nav-mark" href="index.html">
+        <span class="dot"></span>
+        elfboi
+      </a>
+      <div class="nav-menu">
+        <a href="audio.html">audio</a>
+        <a href="health.html">health</a>
+        <a href="random.html">random</a>
+      </div>
+    </nav>
+
+    <!-- ============ HERO ============ -->
+    <section class="hero has-ornament">
+
+      <!-- Ornament: nested concentric petal-loops, top right of hero -->
+      <svg class="ornament orn-hero" viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- outer loop, crimson -->
+        <path d="M 190 50 C 280 60, 340 130, 330 220 C 320 300, 250 340, 170 330 C 90 310, 50 240, 60 160 C 70 90, 130 50, 190 50 Z"
+              stroke="#D63B3B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- middle loop, butter -->
+        <path d="M 190 100 C 250 105, 290 150, 285 210 C 275 265, 230 295, 175 285 C 115 270, 95 220, 105 165 C 115 120, 150 100, 190 100 Z"
+              stroke="#E8C04D" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- inner loop, cobalt -->
+        <path d="M 190 145 C 225 150, 245 180, 240 215 C 230 250, 205 265, 175 255 C 145 245, 140 215, 150 185 C 158 162, 175 148, 190 145 Z"
+              stroke="#2C5FB8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- center small leaf -->
+        <circle cx="195" cy="205" r="10" stroke="#4D7A4A" stroke-width="3"/>
+        <circle cx="195" cy="205" r="3" fill="#D63B3B"/>
+        <!-- floating curl, grape -->
+        <path d="M 320 70 C 345 75, 350 100, 335 115 C 315 120, 305 100, 315 80 C 318 73, 320 70, 320 70 Z"
+              stroke="#6B4FA0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- floating curl, sky -->
+        <path d="M 50 290 C 75 290, 90 305, 80 325 C 60 335, 45 320, 45 305 C 45 295, 50 290, 50 290 Z"
+              stroke="#6FA8C0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- tendril, tangerine -->
+        <path d="M 70 80 C 50 60, 60 40, 90 45"
+              stroke="#E89456" stroke-width="3" stroke-linecap="round"/>
+        <!-- tendril, pink -->
+        <path d="M 320 290 C 345 290, 355 310, 340 325"
+              stroke="#E29CB0" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+
+      <h1>
+        elfboi<span class="colon">:</span> studio for <span class="em-crimson">utility</span> apps with <span class="em-grape">art</span> in mind for <span class="audio-highlight"><span class="em-cobalt">audio</span></span> &amp; other <span class="em-leaf">curious places</span>.
+      </h1>
+
+      <div class="newsletter" id="newsletter">
+        <div class="newsletter-label">↳ stay close</div>
+        <p class="newsletter-text">let's <span class="em">adventure</span> together!</p>
+        <form class="newsletter-form" id="newsletter-form">
+          <input type="email" placeholder="your email" required aria-label="email" />
+          <button type="submit">join</button>
+        </form>
+        <div class="newsletter-success">
+          ✿ thanks — you're on the list.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RELEASED ============ -->
+    <section class="released has-ornament">
+
+      <svg class="ornament orn-released" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- outer, sage -->
+        <path d="M 110 30 C 165 35, 195 75, 190 130 C 180 175, 140 195, 95 190 C 50 180, 30 140, 35 95 C 45 55, 80 30, 110 30 Z"
+              stroke="#7A9876" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- middle, pink -->
+        <path d="M 110 65 C 145 70, 160 100, 155 130 C 145 160, 120 170, 90 165 C 65 155, 55 130, 60 100 C 65 80, 90 65, 110 65 Z"
+              stroke="#E29CB0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- center, butter circle -->
+        <circle cx="115" cy="120" r="14" stroke="#E8C04D" stroke-width="3"/>
+        <circle cx="115" cy="120" r="4" fill="#D63B3B"/>
+        <!-- curl tangerine -->
+        <path d="M 35 30 C 55 30, 60 50, 50 60 C 35 60, 25 50, 30 35 C 32 31, 35 30, 35 30 Z"
+              stroke="#E89456" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+
+      <div class="section-header">
+        <h2 class="section-title">released</h2>
+      </div>
+
+      <div class="products-grid cols-1">
+        <article class="product bg-rose">
+          <div class="product-badges">
+            <span class="badge tag">health</span>
+            <span class="badge tag">free</span>
+          </div>
+          <div class="product-num">01</div>
+          <h3>vitals</h3>
+          <p>A clean, calm blood pressure tracker. Log readings, see trends, share with a doctor. No ads, no upsells, no nonsense — just a quiet tool that does its job.</p>
+          <div class="for">for anyone monitoring their health</div>
+          <a class="product-link" href="https://vitals-bp.vercel.app/" target="_blank" rel="noopener">
+            open vitals <span class="arrow">→</span>
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ MAKING ============ -->
+    <section class="making has-ornament">
+
+      <svg class="ornament orn-making" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- outer, grape -->
+        <path d="M 110 30 C 165 35, 195 80, 190 145 C 180 195, 140 215, 95 210 C 50 200, 25 155, 30 100 C 40 60, 80 30, 110 30 Z"
+              stroke="#6B4FA0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- middle, tangerine -->
+        <path d="M 110 70 C 145 75, 160 110, 155 150 C 145 180, 115 195, 85 185 C 60 175, 55 145, 60 115 C 65 90, 90 70, 110 70 Z"
+              stroke="#E89456" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- center, leaf circle -->
+        <circle cx="110" cy="135" r="14" stroke="#4D7A4A" stroke-width="3"/>
+        <circle cx="110" cy="135" r="4" fill="#E8C04D"/>
+        <!-- curl crimson -->
+        <path d="M 175 30 C 195 30, 200 50, 190 60 C 175 60, 165 50, 170 35 C 172 31, 175 30, 175 30 Z"
+              stroke="#D63B3B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- tendril sky -->
+        <path d="M 30 220 C 15 215, 15 200, 35 200"
+              stroke="#6FA8C0" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+
+      <div class="section-header">
+        <h2 class="section-title">currently <span class="em-2">making</span></h2>
+      </div>
+
+      <div class="products-grid cols-2">
+        <article class="product bg-sky">
+          <div class="product-badges">
+            <span class="badge tag">audio</span>
+          </div>
+          <div class="product-num">02</div>
+          <h3>identify</h3>
+          <span class="working-title">working title</span>
+          <p>Intelligent metadata for sound libraries. Tag and organize tens of thousands of files in minutes — not hours of manual work.</p>
+          <div class="for">for sound designers · post houses · library managers</div>
+        </article>
+
+        <article class="product bg-mint">
+          <div class="product-badges">
+            <span class="badge tag">audio</span>
+          </div>
+          <div class="product-num">03</div>
+          <h3>leveler</h3>
+          <span class="working-title">working title</span>
+          <p>Context-aware dialogue gain. Smooth clip-to-clip levels while preserving room tone, breath, and natural performance dynamics.</p>
+          <div class="for">for dialogue editors · documentary · podcast · post audio</div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ HORIZON ============ -->
+    <section class="horizon has-ornament">
+
+      <svg class="ornament orn-horizon" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- outer, cobalt -->
+        <path d="M 100 25 C 150 30, 180 70, 175 130 C 165 180, 130 200, 90 195 C 45 185, 25 145, 30 95 C 40 55, 75 25, 100 25 Z"
+              stroke="#2C5FB8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- middle, butter -->
+        <path d="M 100 60 C 130 65, 145 95, 140 130 C 130 160, 105 175, 80 165 C 55 155, 50 130, 55 100 C 60 80, 80 60, 100 60 Z"
+              stroke="#E8C04D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- center, crimson circle -->
+        <circle cx="100" cy="120" r="13" stroke="#D63B3B" stroke-width="3"/>
+        <circle cx="100" cy="120" r="4" fill="#6B4FA0"/>
+        <!-- curl leaf -->
+        <path d="M 30 200 C 10 195, 10 180, 30 175 C 40 180, 40 195, 30 200 Z"
+              stroke="#4D7A4A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+
+      <div class="section-header">
+        <h2 class="section-title">on the <span class="em-2">horizon</span></h2>
+      </div>
+
+      <div class="horizon-grid">
+        <a class="horizon-item horizon-1" href="audio.html">
+          <span class="num">i.</span>
+          <h4>audio</h4>
+          <p>Plugins and utilities for working post and music professionals. Built for daily use.</p>
+          <span class="horizon-arrow">explore →</span>
+        </a>
+        <a class="horizon-item horizon-2" href="health.html">
+          <span class="num">ii.</span>
+          <h4>health</h4>
+          <p>Quiet wellbeing tools that respect the user. Not gamified. Not extractive. Useful.</p>
+          <span class="horizon-arrow">explore →</span>
+        </a>
+        <a class="horizon-item horizon-3" href="random.html">
+          <span class="num">iii.</span>
+          <h4>random</h4>
+          <p>Curious tools for the in-between — learning, language, daily small problems worth solving.</p>
+          <span class="horizon-arrow">explore →</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section class="about has-ornament">
+
+      <svg class="ornament orn-about" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- outer, leaf -->
+        <path d="M 110 30 C 165 35, 195 80, 190 140 C 180 195, 140 215, 95 210 C 50 200, 25 155, 30 100 C 40 60, 80 30, 110 30 Z"
+              stroke="#4D7A4A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- middle, pink -->
+        <path d="M 110 70 C 145 75, 160 110, 155 150 C 145 180, 115 195, 85 185 C 60 175, 55 145, 60 115 C 65 90, 90 70, 110 70 Z"
+              stroke="#E29CB0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- center, sky circle -->
+        <circle cx="110" cy="135" r="14" stroke="#6FA8C0" stroke-width="3"/>
+        <circle cx="110" cy="135" r="4" fill="#D63B3B"/>
+        <!-- curl butter -->
+        <path d="M 35 35 C 55 35, 60 55, 50 65 C 35 65, 25 55, 30 40 C 32 36, 35 35, 35 35 Z"
+              stroke="#E8C04D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+
+      <div class="section-header">
+        <h2 class="section-title">about <span class="em-3">elfboi</span></h2>
+      </div>
+
+      <div class="about-content">
+        <p>
+          elfboi is a <span class="em-1">solo studio</span> intent on making accessible, utility apps with <span class="em-4">fun &amp; art</span> in mind. Often collaborating with other artists &amp; makers in the space. Software that solves a single problem, looks good doing it, and asks little of the people using it.
+        </p>
+        <p>
+          The work sits at the intersection of <span class="em-2">design and craft</span>, built by hands trained in art and sound. Every app is approached with intention, restraint, and a point of view!
+        </p>
+        <p>
+          For art, music, and other less utilitarian work, see <a href="https://leviathe.studio" rel="noopener">leviathe.studio</a>.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <span class="footer-mark">© 2026 elfboi</span>
+      <div class="footer-links">
+        <a href="https://leviathe.studio" rel="noopener">leviathe.studio</a>
+        <a href="mailto:hello@elfboi.io">hello@elfboi.io</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const form = document.getElementById('newsletter-form');
+    const wrapper = document.getElementById('newsletter');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = form.querySelector('input').value.trim();
+      if (!email) return;
+      wrapper.classList.add('is-success');
+    });
+  </script>
+</body>
+</html>
