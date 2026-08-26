@@ -1,266 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>elfboi — studio for utility apps with art in mind</title>
-  <meta name="description" content="elfboi is a studio for utility apps with art in mind — for audio and other curious places." />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,500;1,9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="shared.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>elfboi &mdash; an artist-led audio hub</title>
+<meta name="description" content="elfboi is an artist-led audio hub for tools and learning. The site is under construction.">
+<meta property="og:title" content="elfboi">
+<meta property="og:description" content="An artist-led audio hub for tools and learning.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&family=Bungee&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#22281D; --paper:#F7F2E6; --lift:#F3EDDC; --grey:#6E7266;
+  --moss:#4F7942; --moss-deep:#2C4425; --gold:#E3A347; --gold-light:#E5BF80;
+  --sans:"Fredoka","Helvetica Neue",Arial,sans-serif;
+  --display:"Bungee","Fredoka",Arial,sans-serif;
+  --mono:"DM Mono","SFMono-Regular",Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:clamp(.96rem,.93rem + .15vw,1.02rem);line-height:1.55;-webkit-font-smoothing:antialiased}
+em,i{font-style:normal;font-weight:600}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3.5rem);position:relative;z-index:2}
+.bar{display:flex;align-items:baseline;justify-content:space-between;gap:1.5rem;
+  padding:1.6rem 0 1.3rem;border-bottom:1px solid #D9E2CF;flex-wrap:wrap}
+.mark{font-family:var(--sans);font-size:1.28rem;font-weight:600;letter-spacing:-.03em;
+  text-decoration:none;line-height:1}
+.mark i{color:var(--gold);font-weight:600}
+.status{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;color:var(--grey);
+  display:inline-flex;align-items:center;gap:.45rem}
+.status::before{content:"";width:6px;height:6px;background:var(--gold);display:block}
+main{padding:clamp(2.6rem,6vw,4.6rem) 0 0}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+  gap:clamp(2rem,5vw,4rem);align-items:center}
+h1{font-family:var(--display);font-size:clamp(2rem,1.3rem + 2.8vw,3.7rem);line-height:1.08;
+  letter-spacing:.005em;font-weight:400;margin:0 0 1.5rem;max-width:13ch}
+.l{display:inline-block;transition:transform .4s cubic-bezier(.34,1.5,.5,1)}
+h1:hover .l{transform:translateY(-3px)}
+h1:hover .l:nth-child(2n){transform:translateY(3px)}
+h1:hover .l:nth-child(3n){transform:translateY(-5px)}
+.starred{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='108' height='46' viewBox='0 0 108 46'%3E%3Cg fill='%23FFFFFF'%3E%3Cpath d='M14 2l2.1 5.9L22 10l-5.9 2.1L14 18l-2.1-5.9L6 10l5.9-2.1z'/%3E%3Cpath d='M76 6l1.5 4.2L81.7 12l-4.2 1.5L76 17.7l-1.5-4.2L70.3 12l4.2-1.5z'/%3E%3Cpath d='M46 30l1.7 4.6 4.6 1.7-4.6 1.7L46 42.6l-1.7-4.6-4.6-1.7 4.6-1.7z'/%3E%3Cpath d='M96 33l1.2 3.3 3.3 1.2-3.3 1.2L96 42l-1.2-3.3-3.3-1.2 3.3-1.2z'/%3E%3Cpath d='M30 40l1.1 3 3 1.1-3 1.1L30 48l-1.1-3-3-1.1 3-1.1z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat:repeat-x;background-size:auto 96%;background-position:0 50%;padding:0 .12em;
+  transition:background-position .55s cubic-bezier(.34,1.3,.5,1)}
+h1:hover .starred{background-position:14px 42%}
+.lede{font-size:clamp(1.05rem,.98rem + .3vw,1.25rem);line-height:1.45;color:var(--moss-deep);
+  max-width:46ch;margin:0 0 1.4rem}
+p{margin:0 0 1.1rem;max-width:60ch}
+.art svg{width:100%;height:auto;overflow:visible}
+.art path,.art circle,.art ellipse{fill:none;stroke:var(--moss-deep);stroke-width:1.2;
+  stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.art .thin{stroke-width:.8;opacity:.55}
+.art .wave,.art .sine{stroke-width:1.7}
+.art .riso{fill:var(--gold-light);stroke:none;transform:translate(9px,9px);
+  transition:transform .6s cubic-bezier(.2,.85,.25,1),fill .4s}
+.art:hover .riso{transform:translate(0,0);fill:var(--gold)}
+.art .riso-faint{opacity:.32}
+.art .bead{fill:var(--paper);stroke:var(--moss-deep);stroke-width:1.4}
+.art:hover .bead{fill:var(--ink);stroke:var(--ink)}
+.art .fill-solid{fill:var(--moss-deep);stroke:none}
+.art .spark{fill:var(--gold);stroke:none;opacity:0;transform-box:fill-box;transform-origin:center;
+  transform:scale(.3) rotate(-30deg);transition:opacity .3s,transform .5s cubic-bezier(.34,1.6,.5,1)}
+.art:hover .spark{opacity:1;transform:scale(1) rotate(0)}
+.art .float{transition:transform .7s cubic-bezier(.34,1.4,.5,1)}
+.art .f1{animation:bob 7s ease-in-out infinite}
+.art .f2{animation:bob 9s ease-in-out infinite .8s}
+.art .f3{animation:bob 8s ease-in-out infinite 1.6s}
+.art:hover .f1{transform:translateY(-16px)}
+.art:hover .f2{transform:translateY(-22px)}
+.art:hover .f3{transform:translateY(-12px)}
+.art .drift{animation:sway 11s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes sway{0%,100%{transform:translateX(0)}50%{transform:translateX(9px)}}
+.note{position:relative;max-width:430px;margin-top:2.2rem}
+.note-frame{position:absolute;inset:-6px -8px;width:calc(100% + 16px);height:calc(100% + 12px)}
+.note-frame .fill{fill:var(--lift)}
+.note-frame .edge{fill:none;stroke:var(--ink);stroke-width:1.8}
+.note-body{position:relative;padding:1.4rem 1.5rem 1.3rem}
+.label{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;color:#B94A24;
+  display:block;margin-bottom:.5rem}
+.note-body p{font-size:.88rem;margin-bottom:1rem}
+form{display:flex;border-bottom:1px solid var(--ink)}
+input{flex:1;min-width:0;background:transparent;border:0;padding:.75rem 0;
+  font-family:var(--sans);font-size:1rem;color:var(--ink)}
+input::placeholder{color:#B3B5A9}
+input:focus{outline:none}
+form:focus-within{border-bottom-color:var(--gold)}
+button{background:none;border:0;padding:.75rem 0 .75rem 1.2rem;font-family:var(--mono);
+  font-size:.68rem;letter-spacing:.05em;color:#33658A;cursor:pointer}
+button:hover{color:#C04334}
+button[disabled]{opacity:.5;cursor:default}
+.small{font-family:var(--mono);font-size:.7rem;letter-spacing:.03em;color:var(--grey);
+  margin:.7rem 0 0}
+.small a{color:#7A51B1}
+.msg{font-family:var(--mono);font-size:.72rem;margin:.8rem 0 0;color:var(--moss)}
+.msg.bad{color:#C04334}
+.what{border-top:1px solid #D9E2CF;margin-top:clamp(3rem,7vw,5rem);
+  padding:clamp(2.4rem,5vw,3.6rem) 0}
+.what h2{font-family:var(--sans);font-weight:600;font-size:clamp(1.4rem,1.1rem + 1vw,2rem);
+  letter-spacing:-.02em;margin:0 0 1.4rem}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0;
+  border-top:1px solid #D9E2CF;border-left:1px solid #D9E2CF}
+.cell{border-right:1px solid #D9E2CF;border-bottom:1px solid #D9E2CF;padding:1.4rem 1.3rem 1.6rem}
+.cell h3{font-family:var(--sans);font-weight:600;font-size:1.05rem;margin:0 0 .5rem;
+  letter-spacing:-.015em}
+.cell:nth-child(1) h3{color:#C04334}
+.cell:nth-child(2) h3{color:#33658A}
+.cell:nth-child(3) h3{color:#197278}
+.cell p{font-size:.86rem;color:var(--moss-deep);margin:0}
+.n{font-family:var(--mono);font-size:.62rem;color:#B3B5A9;display:block;margin-bottom:.7rem}
+footer{border-top:1px solid #D9E2CF;padding:1.8rem 0 2.6rem;display:flex;
+  justify-content:space-between;gap:1.5rem;flex-wrap:wrap;font-family:var(--mono);
+  font-size:.68rem;letter-spacing:.03em;color:var(--grey)}
+footer a{color:var(--moss);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:1px}
+footer a:hover{color:var(--gold);border-bottom-color:var(--gold)}
+.backdrop{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.wv{position:absolute;left:0;overflow:visible;animation-name:cross;
+  animation-timing-function:linear;animation-fill-mode:both}
+.wv path{fill:none;stroke-width:1.6;stroke-linecap:round;opacity:.22}
+@keyframes cross{from{transform:translateX(-100%)}to{transform:translateX(100vw)}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:860px){.hero{grid-template-columns:1fr}.art{max-width:440px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+  .backdrop{display:none}}
+</style>
 </head>
 <body>
+<div class="backdrop" aria-hidden="true"></div>
 
-  <main>
-    <nav>
-      <a class="nav-mark" href="index.html">
-        <span class="dot"></span>
-        elfboi
-      </a>
-      <div class="nav-menu">
-        <a href="audio.html">audio</a>
-        <a href="health.html">health</a>
-        <a href="random.html">random</a>
-      </div>
-    </nav>
+<div class="wrap">
+  <header class="bar">
+    <a class="mark" href="/">elfbo<i>i</i></a>
+    <span class="status">under construction</span>
+  </header>
+</div>
 
-    <!-- ============ HERO ============ -->
-    <section class="hero has-ornament">
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <h1>An <span class="starred"><span class="l" style="color:#C04334">a</span><span class="l" style="color:#E3A347">r</span><span class="l" style="color:#33658A">t</span><span class="l" style="color:#7A51B1">i</span><span class="l" style="color:#197278">s</span><span class="l" style="color:#4F7942">t</span><span class="l" style="color:#B94A24">-</span><span class="l" style="color:#C04334">l</span><span class="l" style="color:#E3A347">e</span><span class="l" style="color:#33658A">d</span></span> audio hub for tools &amp; learning</h1>
+        <p class="lede">elfboi makes audio tools, teaches how to use them, and shares the
+        templates behind real sessions. It is being built now.</p>
 
-      <!-- Ornament: nested concentric petal-loops, top right of hero -->
-      <svg class="ornament orn-hero" viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- outer loop, crimson -->
-        <path d="M 190 50 C 280 60, 340 130, 330 220 C 320 300, 250 340, 170 330 C 90 310, 50 240, 60 160 C 70 90, 130 50, 190 50 Z"
-              stroke="#D63B3B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- middle loop, butter -->
-        <path d="M 190 100 C 250 105, 290 150, 285 210 C 275 265, 230 295, 175 285 C 115 270, 95 220, 105 165 C 115 120, 150 100, 190 100 Z"
-              stroke="#E8C04D" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- inner loop, cobalt -->
-        <path d="M 190 145 C 225 150, 245 180, 240 215 C 230 250, 205 265, 175 255 C 145 245, 140 215, 150 185 C 158 162, 175 148, 190 145 Z"
-              stroke="#2C5FB8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- center small leaf -->
-        <circle cx="195" cy="205" r="10" stroke="#4D7A4A" stroke-width="3"/>
-        <circle cx="195" cy="205" r="3" fill="#D63B3B"/>
-        <!-- floating curl, grape -->
-        <path d="M 320 70 C 345 75, 350 100, 335 115 C 315 120, 305 100, 315 80 C 318 73, 320 70, 320 70 Z"
-              stroke="#6B4FA0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- floating curl, sky -->
-        <path d="M 50 290 C 75 290, 90 305, 80 325 C 60 335, 45 320, 45 305 C 45 295, 50 290, 50 290 Z"
-              stroke="#6FA8C0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- tendril, tangerine -->
-        <path d="M 70 80 C 50 60, 60 40, 90 45"
-              stroke="#E89456" stroke-width="3" stroke-linecap="round"/>
-        <!-- tendril, pink -->
-        <path d="M 320 290 C 345 290, 355 310, 340 325"
-              stroke="#E29CB0" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-
-      <h1>
-        elfboi<span class="colon">:</span> studio for <span class="em-crimson">utility</span> apps with <span class="em-grape">art</span> in mind for <span class="audio-highlight"><span class="em-cobalt">audio</span></span> &amp; other <span class="em-leaf">curious places</span>.
-      </h1>
-
-      <div class="newsletter" id="newsletter">
-        <div class="newsletter-label">↳ stay close</div>
-        <p class="newsletter-text">let's <span class="em">adventure</span> together!</p>
-        <form class="newsletter-form" id="newsletter-form">
-          <input type="email" placeholder="your email" required aria-label="email" />
-          <button type="submit">join</button>
-        </form>
-        <div class="newsletter-success">
-          ✿ thanks — you're on the list.
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ RELEASED ============ -->
-    <section class="released has-ornament">
-
-      <svg class="ornament orn-released" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- outer, sage -->
-        <path d="M 110 30 C 165 35, 195 75, 190 130 C 180 175, 140 195, 95 190 C 50 180, 30 140, 35 95 C 45 55, 80 30, 110 30 Z"
-              stroke="#7A9876" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- middle, pink -->
-        <path d="M 110 65 C 145 70, 160 100, 155 130 C 145 160, 120 170, 90 165 C 65 155, 55 130, 60 100 C 65 80, 90 65, 110 65 Z"
-              stroke="#E29CB0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- center, butter circle -->
-        <circle cx="115" cy="120" r="14" stroke="#E8C04D" stroke-width="3"/>
-        <circle cx="115" cy="120" r="4" fill="#D63B3B"/>
-        <!-- curl tangerine -->
-        <path d="M 35 30 C 55 30, 60 50, 50 60 C 35 60, 25 50, 30 35 C 32 31, 35 30, 35 30 Z"
-              stroke="#E89456" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-
-      <div class="section-header">
-        <h2 class="section-title">released</h2>
-      </div>
-
-      <div class="products-grid cols-1">
-        <article class="product bg-rose">
-          <div class="product-badges">
-            <span class="badge tag">health</span>
-            <span class="badge tag">free</span>
+        <aside class="note">
+          <svg class="note-frame" viewBox="0 0 320 210" preserveAspectRatio="none" aria-hidden="true">
+            <path class="fill" d="M6,10 L314,5 L316,202 L4,198 Z"/>
+            <path class="edge" d="M6,10 L314,5 L316,202 L4,198 Z"/>
+          </svg>
+          <div class="note-body">
+            <span class="label">newsletter</span>
+            <p>Keep up to date with beta and full releases,<br>new templates, and course drops.</p>
+            <form id="signup" novalidate>
+              <label class="sr" for="email">Email address</label>
+              <input id="email" name="email_address" type="email" placeholder="you@somewhere"
+                     required autocomplete="email">
+              <button type="submit">join</button>
+            </form>
+            <p class="msg" id="msg" role="status" aria-live="polite"></p>
+            <p class="small">Want to collaborate with us?
+              <a href="mailto:hello@elfboi.io">Say hello</a></p>
           </div>
-          <div class="product-num">01</div>
-          <h3>vitals</h3>
-          <p>A clean, calm blood pressure tracker. Log readings, see trends, share with a doctor. No ads, no upsells, no nonsense — just a quiet tool that does its job.</p>
-          <div class="for">for anyone monitoring their health</div>
-          <a class="product-link" href="https://vitals-bp.vercel.app/" target="_blank" rel="noopener">
-            open vitals <span class="arrow">→</span>
-          </a>
-        </article>
+        </aside>
+      </div>
+
+      <div class="art"><svg viewBox="0 0 420 430" role="img" aria-label="A drawn platform with tools stacked on it and a signal arcing overhead">
+  <path class="riso riso-faint" d="M30.0,300.0 Q119.4,246.9 210.0,196.0 Q298.2,251.1 390.0,300.0 Q300.0,352.1 210.0,404.0 Q119.8,352.4 30.0,300.0"/>
+  <path class="pt-platform" d="M30.0,300.0 Q122.8,252.8 210.0,196.0 Q299.8,248.4 390.0,300.0 Q299.7,351.4 210.0,404.0 Q119.8,352.3 30.0,300.0"/>
+  <path class="thin pt-platform" d="M75.0,274.0 Q164.8,326.3 255.0,378.0"/>
+  <path class="thin pt-platform" d="M120.0,248.0 Q209.0,301.7 300.0,352.0"/>
+  <path class="thin pt-platform" d="M165.0,222.0 Q254.5,274.8 345.0,326.0"/>
+  <path class="thin pt-platform" d="M75.0,326.0 Q165.2,274.3 255.0,222.0"/>
+  <path class="thin pt-platform" d="M120.0,352.0 Q209.1,298.4 300.0,248.0"/>
+  <path class="thin pt-platform" d="M165.0,378.0 Q254.7,325.5 345.0,274.0"/>
+  <path class="sine pt-sine" d="M52.0,300.0 Q55.4,299.7 58.6,301.0 Q61.8,301.9 65.2,302.5 Q68.4,303.7 71.8,304.2 Q75.2,304.6 78.3,305.9 Q81.8,305.7 84.9,307.1 Q88.2,307.9 91.5,307.5 Q94.8,307.4 98.1,306.8 Q101.2,305.2 104.7,305.0 Q108.0,303.7 111.2,302.2 Q114.8,300.7 117.8,298.4 Q121.4,296.7 124.4,294.2 Q128.1,292.8 131.0,290.1 Q134.8,289.2 137.6,286.5 Q141.0,285.7 144.2,284.1 Q147.6,284.8 150.8,283.3 Q154.0,283.8 157.3,284.4 Q160.9,285.4 163.9,287.5 Q166.6,290.7 170.5,292.3 Q174.2,295.1 177.1,298.6 Q181.0,301.6 183.7,305.7 Q187.6,308.6 190.2,312.8 Q193.5,316.0 196.8,319.0 Q199.6,322.2 203.4,323.7 Q206.8,324.5 210.0,326.0 Q213.7,325.9 216.6,323.7 Q220.4,322.1 223.2,319.0 Q226.0,315.5 229.8,312.8 Q233.0,309.2 236.3,305.7 Q239.8,302.3 242.9,298.6 Q246.5,295.7 249.5,292.3 Q253.1,290.2 256.1,287.5 Q258.9,285.0 262.7,284.4 Q266.0,284.3 269.2,283.3 Q272.6,282.9 275.8,284.1 Q279.1,285.3 282.4,286.5 Q285.7,288.3 289.0,290.1 Q292.8,291.3 295.6,294.2 Q298.7,296.6 302.2,298.4 Q305.4,300.4 308.8,302.2 Q312.3,303.0 315.3,305.0 Q318.5,306.5 321.9,306.8 Q325.3,306.3 328.5,307.5 Q331.9,308.3 335.1,307.1 Q338.2,305.5 341.7,305.9 Q345.1,305.8 348.2,304.2 Q351.6,303.5 354.8,302.5 Q357.9,300.9 361.4,301.0 Q364.6,300.0 368.0,300.0"/>
+  <path class="riso f-slab" d="M120.0,250.0 Q165.2,275.6 210.0,302.0 Q255.5,276.9 300.0,250.0 Q254.8,224.4 210.0,198.0 Q165.7,225.2 120.0,250.0"/>
+  <path class="pt-slab" d="M120.0,250.0 Q165.9,274.4 210.0,302.0 Q253.5,273.4 300.0,250.0 Q255.2,223.6 210.0,198.0 Q165.2,224.4 120.0,250.0"/>
+  <path class="pt-slab" d="M120.0,250.0 Q118.1,266.0 120.0,284.8"/>
+  <path class="pt-slab" d="M300.0,250.0 Q298.1,266.0 300.0,284.8"/>
+  <path class="pt-slab" d="M210.0,302.0 Q208.1,318.0 210.0,336.8"/>
+  <path class="pt-slab" d="M120.0,282.0 Q164.3,309.2 210.0,334.0 Q255.7,309.2 300.0,282.0"/>
+  <g class="drift">
+  <path class="wave pt-signal" d="M40.0,150.0 Q70.0,125.6 95.0,96.0 Q121.9,117.7 150.0,138.0 Q180.2,106.2 205.0,70.0 Q233.1,98.5 260.0,128.0 Q285.2,104.9 315.0,88.0 Q342.9,110.7 372.0,132.0"/>
+  <circle class="bead bead1" cx="40" cy="150" r="6"/>
+  <circle class="bead bead2" cx="95" cy="96" r="6"/>
+  <circle class="bead bead3" cx="150" cy="138" r="6"/>
+  <circle class="bead bead4" cx="205" cy="70" r="6"/>
+  <circle class="bead bead5" cx="260" cy="128" r="6"/>
+  <circle class="bead bead6" cx="315" cy="88" r="6"/>
+  <circle class="bead bead7" cx="372" cy="132" r="6"/>
+  </g>
+  <path class="riso f-speaker f-spk1" d="M42.0,229.0 Q55.8,239.7 72.0,246.0 Q86.4,236.5 102.0,229.0 Q104.5,201.0 102.0,173.0 Q85.8,166.7 72.0,156.0 Q57.9,166.0 42.0,173.0 Q44.1,201.0 42.0,229.0"/>
+  <path class="pt-speaker" d="M42.0,229.0 Q55.8,239.7 72.0,246.0 Q85.9,235.6 102.0,229.0 Q103.6,201.0 102.0,173.0 Q86.7,165.0 72.0,156.0 Q55.8,162.4 42.0,173.0 Q39.4,201.0 42.0,229.0"/>
+  <path class="pt-speaker" d="M72.0,246.0 Q73.1,218.0 72.0,187.2"/>
+  <path class="pt-speaker" d="M42.0,173.0 Q56.4,182.5 72.0,190.0 Q87.6,182.6 102.0,173.0"/>
+  <ellipse class="cone pt-speaker" cx="57" cy="218" rx="13" ry="9.1" transform="rotate(-30 57 218)"/>
+  <ellipse class="cone pt-speaker" cx="57" cy="194" rx="6" ry="4.1" transform="rotate(-30 57 194)"/>
+  <ellipse class="fill-solid" cx="57" cy="218" rx="4" ry="2.8" transform="rotate(-30 57 218)"/>
+  <path class="riso f-speaker f-spk2" d="M318.0,273.0 Q332.5,282.4 348.0,290.0 Q364.3,283.7 378.0,273.0 Q379.6,245.0 378.0,217.0 Q362.4,209.6 348.0,200.0 Q333.9,210.1 318.0,217.0 Q318.7,245.0 318.0,273.0"/>
+  <path class="pt-speaker" d="M318.0,273.0 Q334.3,279.2 348.0,290.0 Q363.7,282.7 378.0,273.0 Q375.7,245.0 378.0,217.0 Q363.1,208.4 348.0,200.0 Q332.5,207.5 318.0,217.0 Q319.0,245.0 318.0,273.0"/>
+  <path class="pt-speaker" d="M348.0,290.0 Q346.1,262.0 348.0,231.2"/>
+  <path class="pt-speaker" d="M318.0,217.0 Q332.3,226.8 348.0,234.0 Q363.2,225.8 378.0,217.0"/>
+  <ellipse class="cone pt-speaker" cx="333" cy="262" rx="13" ry="9.1" transform="rotate(-30 333 262)"/>
+  <ellipse class="cone pt-speaker" cx="333" cy="238" rx="6" ry="4.1" transform="rotate(-30 333 238)"/>
+  <ellipse class="fill-solid" cx="333" cy="262" rx="4" ry="2.8" transform="rotate(-30 333 262)"/>
+  <path class="riso f-speaker f-spk3" d="M184.0,199.0 Q198.1,204.5 210.0,214.0 Q224.0,208.2 236.0,199.0 Q237.6,177.0 236.0,155.0 Q223.3,147.0 210.0,140.0 Q197.7,148.6 184.0,155.0 Q181.5,177.0 184.0,199.0"/>
+  <path class="pt-speaker" d="M184.0,199.0 Q197.6,205.5 210.0,214.0 Q222.7,206.1 236.0,199.0 Q236.7,177.0 236.0,155.0 Q224.4,145.1 210.0,140.0 Q195.6,145.0 184.0,155.0 Q185.1,177.0 184.0,199.0"/>
+  <path class="pt-speaker" d="M210.0,214.0 Q208.5,192.0 210.0,167.2"/>
+  <path class="pt-speaker" d="M184.0,155.0 Q197.9,160.9 210.0,170.0 Q223.8,163.8 236.0,155.0"/>
+  <ellipse class="cone pt-speaker" cx="197" cy="194" rx="10" ry="7.0" transform="rotate(-30 197 194)"/>
+  <ellipse class="cone pt-speaker" cx="197" cy="176" rx="5" ry="3.4" transform="rotate(-30 197 176)"/>
+  <ellipse class="fill-solid" cx="197" cy="194" rx="4" ry="2.8" transform="rotate(-30 197 194)"/>
+  <g class="float f1 pt-box1">
+  <path class="riso f-box" d="M76.0,202.5 Q86.3,207.7 96.0,214.0 Q104.8,206.1 116.0,202.5 Q116.2,187.5 116.0,172.5 Q106.9,165.1 96.0,160.9 Q87.1,168.7 76.0,172.5 Q77.3,187.5 76.0,202.5"/>
+  <path d="M76.0,202.5 Q85.8,208.7 96.0,214.0 Q106.2,208.6 116.0,202.5 Q113.9,187.5 116.0,172.5 Q104.7,169.0 96.0,160.9 Q85.0,164.9 76.0,172.5 Q77.4,187.5 76.0,202.5"/>
+  <path d="M96.0,214.0 Q94.5,199.0 96.0,181.2"/>
+  <path d="M76.0,172.5 Q86.6,177.1 96.0,184.0 Q106.5,179.1 116.0,172.5"/>
+  </g>
+  <g class="float f2 pt-box2">
+  <path class="riso f-box" d="M313.0,168.2 Q321.3,173.5 330.0,178.0 Q338.7,173.4 347.0,168.2 Q344.9,155.2 347.0,142.2 Q337.2,139.6 330.0,132.4 Q320.5,135.5 313.0,142.2 Q314.4,155.2 313.0,168.2"/>
+  <path d="M313.0,168.2 Q322.6,171.1 330.0,178.0 Q338.8,173.5 347.0,168.2 Q344.4,155.2 347.0,142.2 Q338.4,137.4 330.0,132.4 Q320.7,136.0 313.0,142.2 Q310.2,155.2 313.0,168.2"/>
+  <path d="M330.0,178.0 Q328.8,165.0 330.0,149.2"/>
+  <path d="M313.0,142.2 Q321.7,146.7 330.0,152.0 Q337.7,145.7 347.0,142.2"/>
+  </g>
+  <g class="float f3 pt-box3">
+  <path class="riso f-box" d="M218.0,121.9 Q226.1,124.0 232.0,130.0 Q239.3,126.4 246.0,121.9 Q243.4,110.9 246.0,99.9 Q238.9,96.0 232.0,91.8 Q224.2,94.6 218.0,99.9 Q215.2,110.9 218.0,121.9"/>
+  <path d="M218.0,121.9 Q225.9,124.3 232.0,130.0 Q239.8,127.3 246.0,121.9 Q248.5,110.9 246.0,99.9 Q238.9,96.1 232.0,91.8 Q226.2,98.0 218.0,99.9 Q217.9,110.9 218.0,121.9"/>
+  <path d="M232.0,130.0 Q231.5,119.0 232.0,105.2"/>
+  <path d="M218.0,99.9 Q224.5,104.9 232.0,108.0 Q238.0,102.2 246.0,99.9"/>
+  </g>
+  <path class="spark" d="M58.0,47.0 Q61.4,56.6 71.0,60.0 Q61.4,63.4 58.0,73.0 Q54.6,63.4 45.0,60.0 Q54.6,56.6 58.0,47.0 Z"/>
+  <path class="spark" d="M368.0,42.0 Q370.6,49.4 378.0,52.0 Q370.6,54.6 368.0,62.0 Q365.4,54.6 358.0,52.0 Q365.4,49.4 368.0,42.0 Z"/>
+  <path class="spark" d="M150.0,26.0 Q152.1,31.9 158.0,34.0 Q152.1,36.1 150.0,42.0 Q147.9,36.1 142.0,34.0 Q147.9,31.9 150.0,26.0 Z"/>
+  <path class="spark" d="M300.0,241.0 Q302.3,247.7 309.0,250.0 Q302.3,252.3 300.0,259.0 Q297.7,252.3 291.0,250.0 Q297.7,247.7 300.0,241.0 Z"/>
+  <path class="spark" d="M24.0,206.0 Q26.1,211.9 32.0,214.0 Q26.1,216.1 24.0,222.0 Q21.9,216.1 16.0,214.0 Q21.9,211.9 24.0,206.0 Z"/>
+</svg></div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="what">
+      <h2>What elfboi is</h2>
+      <div class="cols">
+        <div class="cell"><span class="n">01</span><h3>tools</h3>
+          <p>Small audio tools that each solve one very specific thing that anyone can use.
+          Every one comes with a light mode, a dark mode, and an artist mode made with a guest artist.</p></div>
+        <div class="cell"><span class="n">02</span><h3>learning</h3>
+          <p>Courses and free videos on editing, producing, mixing, and recording, taught from
+          beginner to advanced by a working professor and engineer.</p></div>
+        <div class="cell"><span class="n">03</span><h3>templates</h3>
+          <p>Projects, one-sheets, presets, and reference documents taken straight out of
+          real sessions, so you can start from something that already works.</p></div>
       </div>
     </section>
+  </div>
 
-    <!-- ============ MAKING ============ -->
-    <section class="making has-ornament">
-
-      <svg class="ornament orn-making" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- outer, grape -->
-        <path d="M 110 30 C 165 35, 195 80, 190 145 C 180 195, 140 215, 95 210 C 50 200, 25 155, 30 100 C 40 60, 80 30, 110 30 Z"
-              stroke="#6B4FA0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- middle, tangerine -->
-        <path d="M 110 70 C 145 75, 160 110, 155 150 C 145 180, 115 195, 85 185 C 60 175, 55 145, 60 115 C 65 90, 90 70, 110 70 Z"
-              stroke="#E89456" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- center, leaf circle -->
-        <circle cx="110" cy="135" r="14" stroke="#4D7A4A" stroke-width="3"/>
-        <circle cx="110" cy="135" r="4" fill="#E8C04D"/>
-        <!-- curl crimson -->
-        <path d="M 175 30 C 195 30, 200 50, 190 60 C 175 60, 165 50, 170 35 C 172 31, 175 30, 175 30 Z"
-              stroke="#D63B3B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- tendril sky -->
-        <path d="M 30 220 C 15 215, 15 200, 35 200"
-              stroke="#6FA8C0" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-
-      <div class="section-header">
-        <h2 class="section-title">currently <span class="em-2">making</span></h2>
-      </div>
-
-      <div class="products-grid cols-2">
-        <article class="product bg-sky">
-          <div class="product-badges">
-            <span class="badge tag">audio</span>
-          </div>
-          <div class="product-num">02</div>
-          <h3>identify</h3>
-          <span class="working-title">working title</span>
-          <p>Intelligent metadata for sound libraries. Tag and organize tens of thousands of files in minutes — not hours of manual work.</p>
-          <div class="for">for sound designers · post houses · library managers</div>
-        </article>
-
-        <article class="product bg-mint">
-          <div class="product-badges">
-            <span class="badge tag">audio</span>
-          </div>
-          <div class="product-num">03</div>
-          <h3>leveler</h3>
-          <span class="working-title">working title</span>
-          <p>Context-aware dialogue gain. Smooth clip-to-clip levels while preserving room tone, breath, and natural performance dynamics.</p>
-          <div class="for">for dialogue editors · documentary · podcast · post audio</div>
-        </article>
-      </div>
-    </section>
-
-    <!-- ============ HORIZON ============ -->
-    <section class="horizon has-ornament">
-
-      <svg class="ornament orn-horizon" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- outer, cobalt -->
-        <path d="M 100 25 C 150 30, 180 70, 175 130 C 165 180, 130 200, 90 195 C 45 185, 25 145, 30 95 C 40 55, 75 25, 100 25 Z"
-              stroke="#2C5FB8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- middle, butter -->
-        <path d="M 100 60 C 130 65, 145 95, 140 130 C 130 160, 105 175, 80 165 C 55 155, 50 130, 55 100 C 60 80, 80 60, 100 60 Z"
-              stroke="#E8C04D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- center, crimson circle -->
-        <circle cx="100" cy="120" r="13" stroke="#D63B3B" stroke-width="3"/>
-        <circle cx="100" cy="120" r="4" fill="#6B4FA0"/>
-        <!-- curl leaf -->
-        <path d="M 30 200 C 10 195, 10 180, 30 175 C 40 180, 40 195, 30 200 Z"
-              stroke="#4D7A4A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-
-      <div class="section-header">
-        <h2 class="section-title">on the <span class="em-2">horizon</span></h2>
-      </div>
-
-      <div class="horizon-grid">
-        <a class="horizon-item horizon-1" href="audio.html">
-          <span class="num">i.</span>
-          <h4>audio</h4>
-          <p>Plugins and utilities for working post and music professionals. Built for daily use.</p>
-          <span class="horizon-arrow">explore →</span>
-        </a>
-        <a class="horizon-item horizon-2" href="health.html">
-          <span class="num">ii.</span>
-          <h4>health</h4>
-          <p>Quiet wellbeing tools that respect the user. Not gamified. Not extractive. Useful.</p>
-          <span class="horizon-arrow">explore →</span>
-        </a>
-        <a class="horizon-item horizon-3" href="random.html">
-          <span class="num">iii.</span>
-          <h4>random</h4>
-          <p>Curious tools for the in-between — learning, language, daily small problems worth solving.</p>
-          <span class="horizon-arrow">explore →</span>
-        </a>
-      </div>
-    </section>
-
-    <!-- ============ ABOUT ============ -->
-    <section class="about has-ornament">
-
-      <svg class="ornament orn-about" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <!-- outer, leaf -->
-        <path d="M 110 30 C 165 35, 195 80, 190 140 C 180 195, 140 215, 95 210 C 50 200, 25 155, 30 100 C 40 60, 80 30, 110 30 Z"
-              stroke="#4D7A4A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- middle, pink -->
-        <path d="M 110 70 C 145 75, 160 110, 155 150 C 145 180, 115 195, 85 185 C 60 175, 55 145, 60 115 C 65 90, 90 70, 110 70 Z"
-              stroke="#E29CB0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- center, sky circle -->
-        <circle cx="110" cy="135" r="14" stroke="#6FA8C0" stroke-width="3"/>
-        <circle cx="110" cy="135" r="4" fill="#D63B3B"/>
-        <!-- curl butter -->
-        <path d="M 35 35 C 55 35, 60 55, 50 65 C 35 65, 25 55, 30 40 C 32 36, 35 35, 35 35 Z"
-              stroke="#E8C04D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-
-      <div class="section-header">
-        <h2 class="section-title">about <span class="em-3">elfboi</span></h2>
-      </div>
-
-      <div class="about-content">
-        <p>
-          elfboi is a <span class="em-1">solo studio</span> intent on making accessible, utility apps with <span class="em-4">fun &amp; art</span> in mind. Often collaborating with other artists &amp; makers in the space. Software that solves a single problem, looks good doing it, and asks little of the people using it.
-        </p>
-        <p>
-          The work sits at the intersection of <span class="em-2">design and craft</span>, built by hands trained in art and sound. Every app is approached with intention, restraint, and a point of view!
-        </p>
-        <p>
-          For art, music, and other less utilitarian work, see <a href="https://leviathe.studio" rel="noopener">leviathe.studio</a>.
-        </p>
-      </div>
-    </section>
-
+  <div class="wrap">
     <footer>
-      <span class="footer-mark">© 2026 elfboi</span>
-      <div class="footer-links">
-        <a href="https://leviathe.studio" rel="noopener">leviathe.studio</a>
-        <a href="mailto:hello@elfboi.io">hello@elfboi.io</a>
-      </div>
+      <span>&copy; 2026 elfboi</span>
+      <a href="mailto:hello@elfboi.io">hello@elfboi.io</a>
     </footer>
-  </main>
+  </div>
+</main>
 
-  <script>
-    const form = document.getElementById('newsletter-form');
-    const wrapper = document.getElementById('newsletter');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = form.querySelector('input').value.trim();
-      if (!email) return;
-      wrapper.classList.add('is-success');
-    });
-  </script>
+<script>
+/* ============================================================
+   NEWSLETTER
+   Put your Kit form ID between the quotes and this page starts
+   collecting addresses. Nothing else needs changing.
+
+   Where to find it: Kit -> Grow -> Landing Pages & Forms ->
+   your form -> Embed -> HTML. The action URL in that snippet
+   reads https://app.kit.com/forms/1234567/subscriptions and the
+   number in the middle is your form ID.
+
+   Use the form ID, never an API key. An API key (kit_...) is a
+   server-side secret and anything in this file is readable by
+   every visitor.
+   ============================================================ */
+
+var KIT_FORM_ID = "9845746";
+
+(function () {
+  var form = document.getElementById("signup");
+  var msg = document.getElementById("msg");
+  var input = document.getElementById("email");
+  var button = form.querySelector("button");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    msg.className = "msg";
+
+    if (!input.value || input.value.indexOf("@") === -1) {
+      msg.className = "msg bad";
+      msg.textContent = "That address does not look right.";
+      return;
+    }
+
+    if (!KIT_FORM_ID) {
+      msg.className = "msg bad";
+      msg.textContent = "Not connected yet: add your Kit form ID in this page's script.";
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "sending";
+
+    var body = new FormData();
+    body.append("email_address", input.value);
+
+    fetch("https://app.kit.com/forms/" + KIT_FORM_ID + "/subscriptions", {
+      method: "POST",
+      body: body,
+      headers: { Accept: "application/json" }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function () {
+        form.style.display = "none";
+        msg.textContent = "Thank you. Check your inbox to confirm.";
+      })
+      .catch(function () {
+        msg.className = "msg bad";
+        msg.textContent = "Something went wrong. Write to hello@elfboi.io instead.";
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.textContent = "join";
+      });
+  });
+})();
+
+/* Drifting waveforms, the same idea as the full site. */
+(function () {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var host = document.querySelector(".backdrop");
+  var colours = ["#4F7942", "#E3A347", "#C04334", "#33658A", "#7A51B1", "#197278"];
+  var kinds = ["sine", "triangle", "saw", "square"];
+  var bands = [], live = 0;
+
+  function make() {
+    if (live >= 3) return;
+    var kind = kinds[Math.floor(Math.random() * 4)];
+    var w = 260 + Math.random() * 260, amp = 8 + Math.random() * 14;
+    var cycles = 5 + Math.floor(Math.random() * 6);
+    var steps = (kind === "square" || kind === "saw") ? cycles * 4 : 72, d = "";
+    for (var i = 0; i <= steps; i++) {
+      var t = i / steps, ph = t * cycles, y;
+      if (kind === "sine") y = Math.sin(ph * Math.PI * 2);
+      else if (kind === "triangle") { var f = ph % 1; y = f < .5 ? -1 + f * 4 : 3 - f * 4; }
+      else if (kind === "saw") y = ((ph % 1) * 2) - 1;
+      else y = (ph % 1) < .5 ? -1 : 1;
+      d += (i ? " L" : "M") + (t * w).toFixed(1) + "," + (70 + y * amp).toFixed(1);
+    }
+    var opts = [0, 1, 2, 3, 4].filter(function (b) { return bands.indexOf(b) === -1; });
+    if (!opts.length) opts = [0, 1, 2, 3, 4];
+    var band = opts[Math.floor(Math.random() * opts.length)];
+    bands.push(band); if (bands.length > 2) bands.shift();
+
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "wv"); svg.setAttribute("width", w); svg.setAttribute("height", 140);
+    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("stroke", colours[Math.floor(Math.random() * colours.length)]);
+    svg.appendChild(path);
+    svg.style.top = (2 + band * 18.4 + Math.random() * 10) + "%";
+    var dur = 65 + Math.random() * 45;
+    svg.style.animationDuration = dur + "s";
+    host.appendChild(svg); live++;
+    setTimeout(function () { svg.remove(); live--; }, dur * 1000 + 400);
+  }
+
+  make();
+  (function loop() {
+    setTimeout(function () { make(); loop(); }, 14000 + Math.random() * 12000);
+  })();
+})();
+</script>
 </body>
 </html>
