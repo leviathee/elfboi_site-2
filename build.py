@@ -1045,6 +1045,21 @@ NAV = [
 ]
 
 
+# Vercel Web Analytics, the plain-HTML version: no package, no framework, no
+# cookies. Enabling it in the Vercel dashboard serves the script from the
+# project itself, which is why it is a same-origin path rather than a URL to
+# somewhere else — ad blockers rarely touch it.
+#
+# The dashboard, with its framework dropdown set to HTML, shows the exact path
+# for this project. If it differs from the default below, change this one line.
+ANALYTICS_SRC = "/_vercel/insights/script.js"
+
+ANALYTICS = f"""<script>
+  window.va = window.va || function () {{ (window.vaq = window.vaq || []).push(arguments); }};
+</script>
+<script defer src="{ANALYTICS_SRC}"></script>"""
+
+
 def head(title, description, extra=""):
     return f"""<!DOCTYPE html>
 <html lang="en" data-display="bungee">
@@ -1065,6 +1080,7 @@ def head(title, description, extra=""):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&family=Bungee&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="elfboi.css">
+{ANALYTICS}
 
 {extra}</head>
 <body>
