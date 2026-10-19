@@ -1,0 +1,26 @@
+# Generated pages.
+#
+# Every .html file at the root of this repo is written by build.py from
+# build.py itself plus src/. They are deliberately not committed: two people
+# editing a page and its generator at once produces merge conflicts in files
+# nobody is supposed to hand-edit, and the resolution is always "rerun the
+# build" — which git has no way of knowing.
+#
+# Vercel builds them on deploy; see buildCommand in vercel.json.
+# To see the site locally: python3 build.py && open index.html
+#
+# src/clipped-web.html is NOT generated and IS committed — it is the source
+# the Clipped Browser page is copied from.
+/*.html
+
+# QA scaffolding, never part of the site
+node_modules/
+package.json
+package-lock.json
+qa-fonts.css
+fonts/
+__pycache__/
+*.pyc
+
+# screenshots taken while checking work
+/*.png

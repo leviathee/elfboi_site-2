@@ -1,0 +1,3459 @@
+/* ============================================================
+   elfboi — stylesheet
+   Everything visual lives here. Edit tokens below to reskin.
+   No border-radius, no box-shadow, no gradients, no italics.
+   ============================================================ */
+
+/* ---- 1. TOKENS ---- */
+
+:root {
+  /* GREEN FAMILY — the pseudo-neutral. Carries all structure:
+     drawings, rules, labels, borders, secondary text. */
+  --moss-deep:  #2C4425;
+  --moss:       #4F7942;
+  --moss-mid:   #719557;
+  --moss-pale:  #A8C293;
+  --moss-wash:  #D9E2CF;
+
+  /* WARM NEUTRALS — the ground. */
+  --ink:        #22281D;
+  --grey:       #6B6F68;
+  --grey-light: #B4B7B1;
+  --paper:      #FCFCFA;
+  --paper-lift: #F4F4F0;
+  --panel:      #EDEDE7;
+
+  /* GOLD — FILLS ONLY. At 1.96:1 on the ground it cannot be text.
+     It is a shape colour: highlight swipes, hover blocks, riso fills. */
+  --gold:       #E3A347;
+  --gold-light: #E5BF80;
+
+  /* ACCENT ONE — green marks. Periods, active states, hover, tags.
+     4.53:1 on the ground, so it is legible at every size. */
+  --accent:      #4F7942;
+  --accent-deep: #3A5C2F;
+
+  /* ACCENT TWO — unused for now. When a second accent is introduced,
+     define it here and nowhere else. Keep the pair under 2% combined. */
+  --accent-2:      var(--accent);
+  --accent-2-deep: var(--accent-deep);
+
+  /* Type. --display is switchable, see the bottom of this file. */
+  --sans: "Fredoka", "Helvetica Neue", Arial, sans-serif;
+  --display: "Bungee", "Fredoka", Arial, sans-serif;   /* h1 only */
+  --head: "Fredoka", Arial, sans-serif;                /* h2 and below */
+  --mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
+  --display-track: 0em;
+  --display-weight: 400;
+  --display-case: none;
+
+  /* Scale */
+  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.84rem);
+  --step-0:  clamp(0.96rem, 0.93rem + 0.15vw, 1.02rem);
+  --step-1:  clamp(1.15rem, 1.08rem + 0.36vw, 1.38rem);
+  --step-2:  clamp(1.5rem, 1.3rem + 0.95vw, 2.15rem);
+  --step-3:  clamp(2rem, 1.55rem + 2.1vw, 3.6rem);
+  --step-4:  clamp(2.5rem, 1.7rem + 4vw, 5.4rem);
+
+  /* Rhythm */
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --rule: 1px solid #D3D8CC;
+  --rule-strong: 1px solid #B7C1AB;
+}
+
+/* ---- 2. RESET ---- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; }
+button { font: inherit; }
+
+/* Nothing in this design is italic. Emphasis comes from weight and colour. */
+em, i { font-style: normal; font-weight: 600; }
+
+/* ---- 3. LAYOUT ---- */
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.wrap-narrow {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+section { position: relative; }
+
+.band { padding: clamp(2.6rem, 5.5vw, 4.4rem) 0; }
+.band + .band { border-top: var(--rule); }
+
+/* ---- 4. PAGE ---- */
+
+/* The drifting squiggle field was removed. The background is plain for now
+   while the artwork direction is decided. */
+.page { position: relative; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---- 5. MASTHEAD ---- */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.6rem 0 1.3rem;
+  border-bottom: var(--rule);
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-family: var(--head);
+  font-size: 1.28rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+  color: var(--ink);
+  line-height: 1;
+}
+
+/* The dotted i is the seed of the mark. Keep it ochre everywhere. */
+.wordmark .dot { color: var(--accent); }
+
+.nav {
+  display: flex;
+  gap: clamp(1rem, 3vw, 2.4rem);
+  font-family: var(--head);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: -0.005em;
+  text-transform: lowercase;
+}
+
+.nav a { text-decoration: none; color: var(--moss); transition: color 0.18s, font-weight 0.18s; }
+
+.nav a:hover,
+.nav a[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent-deep);
+}
+
+/* ---- 6. TYPE TREATMENTS ---- */
+
+/* H1: the last word carries the accent. Only on H1, only once per page. */
+h1 {
+  max-width: none;
+  font-family: var(--display);
+  font-size: var(--step-3);
+  line-height: 1.04;
+  letter-spacing: var(--display-track);
+  font-weight: var(--display-weight);
+  text-transform: var(--display-case);
+  margin: 0 0 1.4rem;
+  max-width: 16ch;
+}
+
+/* Accented words get a scatter of stars behind them instead of a
+   highlight bar. The stars drift when the heading is hovered. */
+.starred {
+  position: relative;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='108' height='46' viewBox='0 0 108 46'%3E%3Cg fill='none' stroke='%23E3A347' stroke-width='1'%3E%3Cpath d='M14 2l2.1 5.9L22 10l-5.9 2.1L14 18l-2.1-5.9L6 10l5.9-2.1z'/%3E%3Cpath d='M76 6l1.5 4.2L81.7 12l-4.2 1.5L76 17.7l-1.5-4.2L70.3 12l4.2-1.5z'/%3E%3Cpath d='M46 30l1.7 4.6 4.6 1.7-4.6 1.7L46 42.6l-1.7-4.6-4.6-1.7 4.6-1.7z'/%3E%3Cpath d='M96 33l1.2 3.3 3.3 1.2-3.3 1.2L96 42l-1.2-3.3-3.3-1.2 3.3-1.2z'/%3E%3Cpath d='M30 40l1.1 3 3 1.1-3 1.1L30 48l-1.1-3-3-1.1 3-1.1z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: auto 96%;
+  background-position: 0 50%;
+  padding: 0 0.12em;
+  transition: background-position 0.55s cubic-bezier(0.34, 1.3, 0.5, 1);
+}
+
+h1:hover .starred, h2:hover .starred { background-position: 14px 42%; }
+
+/* One brand colour per letter. */
+.l { display: inline-block; transition: transform 0.4s cubic-bezier(0.34, 1.5, 0.5, 1); }
+h1:hover .l { transform: translateY(-3px); }
+h1:hover .l:nth-child(2n) { transform: translateY(3px); }
+h1:hover .l:nth-child(3n) { transform: translateY(-5px); }
+
+h2 .stop, h3 .stop { color: var(--accent); }
+.tool-title .stop { color: var(--accent); }
+
+h3 {
+  font-family: var(--head);
+  font-size: var(--step-1);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+p { margin: 0 0 1.1rem; max-width: 62ch; }
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--moss-deep);
+  max-width: 48ch;
+}
+
+.muted { color: var(--grey); }
+
+/* Eyebrow: mono, lowercase, thin rule. Not a pill. */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--moss);
+  margin: 0 0 1.1rem;
+  display: block;
+}
+
+/* ---- 7. TAGS (titles-as-tags, per design note 7) ---- */
+
+.tags { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0; padding: 0; list-style: none; }
+
+.tag {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--moss);
+  padding-bottom: 3px;
+  background: none;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.tag-accent { color: var(--accent-deep); border-bottom-color: var(--accent); }
+
+/* Filter row on the tool grid */
+.filters { display: flex; flex-wrap: wrap; gap: 1.2rem; margin: 0 0 2.5rem; padding: 0; list-style: none; }
+
+.filter {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--grey);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 0 0 3px;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.filter:hover { color: var(--ink); }
+.filter[aria-pressed="true"] { color: var(--accent); font-weight: 600; border-bottom-color: transparent; }
+
+/* ---- 8. TOOL GRID (the homepage) ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 0;
+  border-top: var(--rule);
+  border-left: var(--rule);
+}
+
+.tile {
+  position: relative;
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  padding: 1.9rem 1.6rem 1.6rem;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: transparent;
+  transition: background 0.25s;
+  min-height: 320px;
+}
+
+.tile:hover, .tile:focus-visible { background: var(--paper-lift); }
+
+.tile[hidden] { display: none; }
+
+.tile-art {
+  height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Thin-line drawings of 3D objects. 1px strokes, no fill. */
+.tile-art svg { height: 100%; width: auto; overflow: visible; }
+.tile-art path, .tile-art line, .tile-art polyline, .tile-art circle, .tile-art rect, .tile-art ellipse {
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 0.25s;
+}
+.tile-art .fill-solid { fill: var(--moss); stroke: none; }
+/* An opaque panel that sits in front of other line work */
+.tile-art .plate { fill: var(--paper); stroke: var(--moss); }
+.tile:hover .tile-art .plate { fill: var(--paper); stroke: var(--accent); }
+.tile:hover .tile-art path,
+.tile:hover .tile-art line,
+.tile:hover .tile-art polyline,
+.tile:hover .tile-art circle,
+.tile:hover .tile-art rect,
+.tile:hover .tile-art ellipse { stroke: var(--accent); }
+.tile:hover .tile-art .fill-solid { fill: var(--accent); stroke: none; }
+
+.tile-name {
+  font-family: var(--head);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 0;
+}
+
+.tile-desc { font-size: var(--step--1); line-height: 1.45; color: var(--moss-deep); margin: 0; max-width: none; }
+
+.tile-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; }
+
+.tile-go {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: var(--grey);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.tile:hover .tile-go { color: var(--accent-deep); transform: translateX(3px); }
+
+/* ---- 9. STATUS DOT ---- */
+
+.status {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: var(--grey);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.status::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  display: inline-block;
+}
+
+.status.is-live::before { background: var(--accent); }
+.status.is-building::before { background: var(--gold); }
+
+/* ---- 10. SIDE NAVIGATION (tool pages) ---- */
+
+.layout-sidenav {
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  max-width: 100%;
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: start;
+  padding: clamp(2.5rem, 6vw, 4.5rem) 0 0;
+}
+
+.sidenav { position: sticky; top: 2.2rem; }
+
+.sidenav ol { list-style: none; margin: 0; padding: 0; border-left: var(--rule-strong); }
+
+.sidenav a {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  text-decoration: none;
+  color: var(--grey);
+  padding: 0.44rem 0 0.44rem 0.9rem;
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.sidenav a:hover { color: var(--ink); }
+.sidenav a.is-active { color: var(--ink); border-left-color: var(--accent); }
+
+@media (max-width: 800px) {
+  .layout-sidenav { grid-template-columns: minmax(0, 1fr); }
+  .sidenav { position: static; margin-bottom: 2rem; }
+  .sidenav ol { display: flex; gap: 1.1rem; overflow-x: auto; border-left: 0; border-bottom: var(--rule-strong); padding-bottom: 0.2rem; }
+  .sidenav a { padding: 0 0 0.5rem; border-left: 0; border-bottom: 1px solid transparent; white-space: nowrap; }
+  .sidenav a.is-active { border-left-color: transparent; border-bottom-color: var(--accent); }
+}
+
+/* ---- 11. TOOL PAGE PIECES ---- */
+
+.tool-head { border-bottom: var(--rule); padding-bottom: 2.4rem; margin-bottom: 3rem; }
+
+.tool-title {
+  font-family: var(--head);
+  font-size: var(--step-3);
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  line-height: 1.02;
+  margin: 0 0 1rem;
+}
+
+.tool-sub { font-size: var(--step-1); color: var(--moss-deep); max-width: 40ch; margin: 0 0 1.6rem; letter-spacing: -0.015em; }
+
+.chunk { padding: 0 0 clamp(2.2rem, 4.5vw, 3.4rem); scroll-margin-top: 5rem; }
+
+/* Specs: definition rows, thin rules, mono values */
+.specs { margin: 0; }
+.specs div { display: grid; grid-template-columns: 150px 1fr; gap: 1.4rem; padding: 0.8rem 0; border-bottom: var(--rule); }
+.specs dt { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.04em; text-transform: lowercase; color: var(--grey); }
+.specs dd { margin: 0; font-size: var(--step--1); color: var(--moss-deep); }
+
+@media (max-width: 560px) { .specs div { grid-template-columns: 1fr; gap: 0.25rem; } }
+
+/* Media placeholders — thin outline, no fill, labelled */
+.frame {
+  border: 1px dashed var(--moss-pale);
+  aspect-ratio: 16 / 9;
+  max-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+  text-align: center;
+  padding: 1rem;
+}
+
+.frame-audio { aspect-ratio: auto; min-height: 92px; }
+
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+
+/* ---- 12. BUTTONS — squared, thin, two levels only ---- */
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+.btn {
+  display: inline-block;
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  text-decoration: none;
+  padding: 0.82rem 1.4rem;
+  border: 1px solid var(--tool-hue, #2B5474);
+  border-radius: 0;
+  background: var(--tool-hue, #2B5474);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+
+.btn:hover { background: #E3A347; border-color: #E3A347; color: var(--ink); }
+
+.btn-quiet { background: transparent; color: var(--ink); border-color: var(--moss-pale); }
+.btn-quiet:hover { background: #E3A347; color: var(--ink); border-color: #E3A347; }
+
+/* ---- 13. NEWSLETTER (Kit) ---- */
+
+.signup { border-top: var(--rule); padding: clamp(3rem, 7vw, 4.5rem) 0; }
+
+.signup-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: end; }
+
+@media (max-width: 760px) { .signup-inner { grid-template-columns: 1fr; align-items: start; } }
+
+.signup h2 { margin-bottom: 0.6rem; }
+
+.signup-form { display: flex; gap: 0; border-bottom: 1px solid var(--ink); }
+
+.signup-form input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0.75rem 0;
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  color: var(--ink);
+}
+
+.signup-form input::placeholder { color: var(--grey-light); }
+.signup-form input:focus { outline: none; }
+.signup-form:focus-within { border-bottom-color: var(--accent); }
+
+.signup-form button {
+  background: none;
+  border: 0;
+  padding: 0.75rem 0 0.75rem 1.2rem;
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+.signup-form button:hover { color: var(--accent-deep); }
+
+.signup-note { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.03em; color: var(--grey); margin: 0.8rem 0 0; }
+
+/* ---- 14. LISTS OF THINGS (learn / templates / blog) ---- */
+
+.rows { border-top: var(--rule); margin: 0; padding: 0; list-style: none; }
+.rows li:last-child .row { border-bottom: 0; }
+
+.row {
+  border-bottom: var(--rule);
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  gap: 1.6rem;
+  align-items: baseline;
+  padding: 1.5rem 0;
+  text-decoration: none;
+  color: inherit;
+  transition: padding-left 0.22s, background 0.22s;
+}
+
+a.row:hover { background: var(--paper-lift); padding-left: 0.7rem; }
+
+.row-index { font-family: var(--mono); font-size: 0.62rem; color: var(--grey-light); letter-spacing: 0.04em; }
+.row-title { display: block; font-family: var(--head); font-size: var(--step-1); font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.35rem; }
+.row-desc { display: block; font-size: var(--step--1); color: var(--moss-deep); margin: 0; max-width: 60ch; }
+.row-meta { font-family: var(--mono); font-size: 0.62rem; color: var(--grey); letter-spacing: 0.04em; text-align: right; white-space: nowrap; }
+
+@media (max-width: 620px) {
+  .row { grid-template-columns: 1fr; gap: 0.5rem; }
+  .row-meta { text-align: left; }
+}
+
+/* ---- 15. TWO-COLUMN PROSE ---- */
+
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+
+/* ---- 16. PEOPLE ---- */
+
+.people { list-style: none; margin: 0; padding: 0; border-top: var(--rule); }
+.people li { border-bottom: var(--rule); padding: 1.2rem 0; display: flex; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.people strong { font-weight: 600; letter-spacing: -0.02em; }
+.people span { font-family: var(--mono); font-size: 0.63rem; color: var(--grey); letter-spacing: 0.04em; }
+
+/* ---- 17. FOOTER ---- */
+
+.foot {
+  border-top: var(--rule);
+  padding: 2rem 0 3rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-family: var(--head);
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  color: var(--grey);
+}
+
+.foot a { color: var(--moss); text-decoration: none; transition: color 0.18s; }
+.foot a:hover { color: var(--gold); font-weight: 500; }
+
+/* ---- 18. ACCESSIBILITY ---- */
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--ink); color: var(--paper);
+  padding: 0.7rem 1.1rem; z-index: 99;
+  font-family: var(--mono); font-size: 0.66rem;
+}
+.skip:focus { left: 1rem; top: 1rem; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- 19. PLACEHOLDER HOME (holding page only) ---- */
+
+.holding {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2rem;
+}
+
+.holding-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(3rem, 10vh, 7rem) 0;
+}
+
+.holding h1 { max-width: 20ch; }
+
+.holding-next { list-style: none; margin: 2.6rem 0 0; padding: 0; border-top: var(--rule); max-width: 560px; }
+.holding-next li {
+  border-bottom: var(--rule);
+  padding: 0.85rem 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: var(--moss-deep);
+}
+.holding-next span:last-child { color: var(--grey); }
+
+/* ---- 20. CLOSING TILE (the "next" slot in the grid) ---- */
+
+.tile-end { cursor: default; }
+.tile-end:hover { background: transparent; }
+.tile-end .tile-name { color: var(--grey); }
+.tile-end .tile-desc { color: var(--grey); }
+.tile-end .tile-go { color: var(--moss); }
+.tile-end .tile-go:hover { color: var(--accent-deep); }
+
+/* ============================================================
+   21. DRAWINGS — whimsy layer
+   Hand-drawn strokes, a misregistered gold fill like a two-colour
+   print that did not quite line up, and things that move on hover.
+   ============================================================ */
+
+.tile-art svg, .tool-art svg { overflow: visible; }
+
+/* The gold fill sits behind the linework, offset. On hover it
+   snaps into register. That misalignment is the whole personality. */
+.tile-art .riso, .tool-art .riso {
+  fill: var(--gold-light);
+  stroke: none;
+  transform: translate(5px, 5px);
+  transition: transform 0.45s cubic-bezier(0.2, 0.85, 0.25, 1), fill 0.3s;
+}
+
+.tile:hover .riso,
+.tool-art:hover .riso { transform: translate(0, 0); fill: var(--gold); }
+
+/* Pieces that spring when you arrive. */
+.pop {
+  transition: transform 0.5s cubic-bezier(0.34, 1.5, 0.5, 1);
+}
+.tile:hover .pop,
+.tool-art:hover .pop { transform: translateY(11px); }
+
+/* Little marks that only exist on hover. */
+.spark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.3) rotate(-25deg);
+  transition: opacity 0.28s ease, transform 0.45s cubic-bezier(0.34, 1.6, 0.5, 1);
+}
+.tile:hover .spark,
+.tool-art:hover .spark { opacity: 1; transform: scale(1) rotate(0deg); }
+
+.tile:hover .spark:nth-of-type(2) { transition-delay: 0.06s; }
+.tile:hover .spark:nth-of-type(3) { transition-delay: 0.12s; }
+
+/* Cursor parallax. Set by JS on the wrapper. */
+.tile-art { transition: transform 0.35s ease-out; will-change: transform; }
+.tile:hover .tile-art { transition: transform 0.08s linear; }
+
+/* ============================================================
+   22. DISPLAY FACE
+   Bungee carries the h1 and nothing else. Everything from h2
+   down is Fredoka at 600, so headers are always bold.
+   ============================================================ */
+
+h1 { --display-track: 0.005em; --display-weight: 400; line-height: 1.08; }
+
+.h1-xl { font-size: clamp(1.7rem, 1rem + 2.4vw, 3.2rem); max-width: none; }
+
+/* ============================================================
+   23. STICKY MASTHEAD + TOOLS DROPDOWN
+   The wordmark stays in the same corner on every page and at
+   every scroll position, the way uaudio.com holds its logo.
+   ============================================================ */
+
+.masthead-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: var(--rule);
+}
+
+.masthead { border-bottom: 0; padding: 1.1rem 0 1rem; }
+
+.nav ul { display: flex; gap: clamp(1rem, 3vw, 2.4rem); list-style: none; margin: 0; padding: 0; }
+.nav li { position: relative; }
+
+.has-drop > a::after {
+  content: "";
+  display: inline-block;
+  width: 0; height: 0;
+  margin-left: 0.4em;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 3px solid currentColor;
+  vertical-align: middle;
+}
+
+.drop {
+  z-index: 90;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding-top: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+}
+
+.has-drop > a:focus + .drop,
+.has-drop:hover .drop,
+.has-drop:focus-within .drop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.drop ul {
+  display: block;
+  min-width: 210px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 0;
+  margin: 0;
+}
+
+.drop li { border-bottom: var(--rule); }
+.drop li:last-child { border-bottom: 0; }
+
+.drop a {
+  color: var(--ink);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.62rem 0.85rem;
+  border-bottom: 0;
+  color: var(--ink);
+}
+
+.nav .drop a { color: var(--ink); font-weight: 500; }
+.drop a, .drop-soon { min-height: 42px; box-sizing: border-box; }
+.nav .drop a:hover { background: var(--paper-lift); color: #C04334; font-weight: 600; }
+.nav .drop-soon { color: var(--grey-light); }
+
+/* Each plug-in is announced by its own colour, in the menu and everywhere else. */
+.drop .dot { width: 8px; height: 8px; flex: 0 0 8px; display: block; border-radius: 50%; }
+.drop-all a { color: var(--grey); }
+.drop-all a::before { content: ""; width: 8px; height: 8px; border: 1px solid var(--grey-light); display: block; border-radius: 50%; }
+
+@media (max-width: 720px) {
+  .drop { display: none; }
+  .has-drop > a::after { display: none; }
+}
+
+/* ============================================================
+   24. PER-TOOL COLOUR
+   On hover the whole tile floods with the plug-in's colour and
+   the type flips to light. On the tool's own page that colour
+   replaces green as the accent throughout.
+   ============================================================ */
+
+.tile { transition: background 0.3s ease, color 0.3s ease; }
+.tile:hover, .tile:focus-visible { background: var(--tool-solid, var(--ink)); }
+.tile:hover .tile-name,
+.tile:hover .tile-desc,
+.tile:hover .tile-go,
+.tile:hover .status { color: var(--paper); }
+.tile:hover .status::before { background: var(--paper); }
+
+.tile:hover .tile-art path,
+.tile:hover .tile-art line,
+.tile:hover .tile-art polyline,
+.tile:hover .tile-art circle,
+.tile:hover .tile-art rect,
+.tile:hover .tile-art ellipse { stroke: var(--paper); }
+
+.tile:hover .tile-art .riso { fill: var(--tool-wash); }
+.tile:hover .tile-art .spark { fill: none; stroke: var(--paper); }
+.tile:hover .tile-art .bead { fill: var(--tool-wash); stroke: var(--paper); }
+.tile:hover .tile-art .thin { opacity: 1; }
+
+.tile-end:hover { background: transparent; }
+.tile-end:hover .tile-name, .tile-end:hover .tile-desc { color: var(--grey); }
+.tile-end:hover .tile-art path { stroke: var(--moss); }
+
+.tool-page { --accent: var(--tool-hue); --accent-deep: var(--tool-hue); --gold: var(--tool-mid); --gold-light: var(--tool-wash); }
+.tool-page .tool-art path,
+.tool-page .tool-art circle { stroke: var(--moss-deep); }
+.tool-page .tool-art .riso { fill: var(--gold-light); }
+.tool-page .tool-art:hover .riso { fill: var(--tool-hue); }
+.tool-page .tool-art .spark { fill: var(--tool-hue); stroke: none; }
+
+.tool-page .btn-quiet { background: transparent; color: var(--tool-hue); border-color: var(--tool-mid); }
+.tool-page .sidenav a.is-active { border-left-color: var(--tool-hue); color: var(--tool-hue); }
+
+/* ============================================================
+   25. PAGES ADDED LATER
+   Video, lessons, includes lists, pillars, people.
+   ============================================================ */
+
+.band-tight { padding-top: clamp(2rem, 4vw, 3.2rem); padding-bottom: clamp(1.6rem, 3vw, 2.6rem); }
+
+.back {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+  text-decoration: none;
+  margin-bottom: 1.6rem;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+.back:hover { color: var(--accent); font-weight: 500; }
+
+/* Video sits above the fold on Learn, before any list */
+.video {
+  margin-top: 2.2rem;
+  border: 1px solid var(--ink);
+  aspect-ratio: 16 / 9;
+  max-width: 860px;
+  background: var(--ink);
+}
+.video iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+/* Lesson list on a course page */
+.lessons { list-style: none; margin: 0; padding: 0; border-top: var(--rule); }
+.lesson {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.78rem 0;
+  border-bottom: var(--rule);
+  font-size: var(--step-0);
+}
+.lesson-n { font-family: var(--mono); font-size: 0.62rem; color: var(--grey-light); letter-spacing: 0.04em; }
+
+/* What is in the download */
+.ticks { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.ticks li {
+  position: relative;
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  border-bottom: var(--rule);
+  font-size: var(--step--1);
+  color: var(--moss-deep);
+}
+.ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 1.05em;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* The four things elfboi sits between */
+.pillars {
+  list-style: none; margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 0;
+  border-top: var(--rule); border-left: var(--rule);
+}
+.pillar {
+  border-right: var(--rule); border-bottom: var(--rule);
+  padding: 1.6rem 1.5rem 1.8rem;
+  display: flex; flex-direction: column; gap: 0.9rem;
+}
+.pillar-n { font-family: var(--mono); font-size: 0.62rem; color: var(--grey-light); letter-spacing: 0.05em; }
+.pillar h3 { margin-bottom: 0.5rem; }
+.pillar p { font-size: var(--step--1); color: var(--moss-deep); margin: 0; }
+
+/* People */
+.people-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: clamp(1.6rem, 4vw, 3rem);
+}
+.people-grid-sm { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+
+.person { display: flex; gap: 1.4rem; align-items: flex-start; }
+.person h3 { margin-bottom: 0.15rem; }
+.person p { font-size: var(--step--1); color: var(--moss-deep); margin: 0; }
+.person-role {
+  font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.05em;
+  color: var(--grey); margin-bottom: 0.6rem !important;
+}
+.person-sm { align-items: center; }
+.person-sm .person-role { margin-bottom: 0 !important; }
+
+/* Drawn stand-in portraits. Replace with <image> when photos exist. */
+.face { flex: 0 0 auto; overflow: visible; }
+.face-120 { width: 120px; height: 120px; }
+.face-72 { width: 72px; height: 72px; }
+.face-fill { fill: var(--gold-light); stroke: none; transform: translate(4px, 4px); transition: transform 0.4s cubic-bezier(0.2,0.85,0.25,1); }
+.person:hover .face-fill { transform: translate(0, 0); fill: var(--gold); }
+.face-ring { fill: none; stroke: var(--moss-deep); stroke-width: 1.2; }
+.face-text {
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em;
+  fill: var(--moss-deep); stroke: none;
+}
+.face-72 .face-text { font-size: 0.6rem; }
+
+@media (max-width: 520px) {
+  .person { flex-direction: column; gap: 1rem; }
+}
+
+
+/* ============================================================
+   26. THE SPECK FIELD
+   No gradient. The ground is the flat paper colour and the only
+   thing on it is a very faint fall of coloured specks, one layer
+   per brand colour, drifting at different speeds.
+
+   It should read as texture you half-notice, not as pattern.
+   If you can name the colours without leaning in, turn the
+   opacity down.
+   ============================================================ */
+
+.page { position: relative; }
+
+[data-backdrop="rain"] .page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.2;
+  background-image:
+    radial-gradient(circle, #E3A347 0.8px, transparent 1.2px),
+    radial-gradient(circle, #C04334 0.8px, transparent 1.2px),
+    radial-gradient(circle, #33658A 0.8px, transparent 1.2px),
+    radial-gradient(circle, #7A51B1 0.8px, transparent 1.2px),
+    radial-gradient(circle, #197278 0.75px, transparent 1.15px),
+    radial-gradient(circle, #719557 0.7px, transparent 1.1px);
+  background-size: 41px 41px, 43px 43px, 47px 47px, 53px 53px, 59px 59px, 61px 61px;
+  background-position: 0 0, 14px 9px, 27px 21px, 6px 33px, 35px 12px, 19px 44px;
+  animation: rain 30s linear infinite;
+}
+
+@keyframes rain {
+  from { background-position: 0 0, 14px 9px, 27px 21px, 6px 33px, 35px 12px, 19px 44px; }
+  to   { background-position: 0 246px, 14px 301px, 27px 376px, 6px 447px, 35px 531px, 19px 610px; }
+}
+
+.sec { position: relative; }
+
+html, body { background: var(--paper); }
+
+/* Faint paper grain, so a white ground is not a flat white ground. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.18 0 0 0 0 0.19 0 0 0 0 0.15 0 0 0 0.14 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.foot { background: transparent; }
+
+.masthead-bar {
+  background: #2B5474;
+  border-bottom: 0;
+  z-index: 80;
+}
+
+.masthead-bar .wordmark { color: #FCFCFA; }
+.masthead-bar .wordmark .dot { color: var(--gold); }
+.nav a { color: #B9CBDA; border-bottom: 0; padding-bottom: 0; }
+.nav a:hover, .nav a[aria-current="page"] { color: #FCFCFA; font-weight: 500; border-bottom: 0; }
+.has-drop > a::after { border-top-color: currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page::after { animation: none; }
+}
+
+/* ============================================================
+   27. HERO LAYOUT
+   ============================================================ */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center;
+}
+
+.band-hero { padding-top: clamp(2.2rem, 4vw, 3.4rem); padding-bottom: clamp(2rem, 4vw, 3.2rem); }
+.hero-text { min-width: 0; }
+.hero-art { min-width: 0; }
+.hero-art > svg { width: 100%; height: auto; overflow: visible; }
+
+.hero-art path,
+.hero-art circle { fill: none; stroke: var(--moss-deep); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.hero-art .thin { stroke-width: 0.8; opacity: 0.55; }
+.hero-art .wave { stroke-width: 1.8; }
+.hero-art .riso { fill: var(--gold-light); stroke: none; transform: translate(9px, 9px); transition: transform 0.6s cubic-bezier(0.2,0.85,0.25,1), fill 0.4s; }
+.hero-art:hover .riso { transform: translate(0, 0); fill: var(--gold); }
+.hero-art .bead { fill: var(--paper); stroke: var(--moss-deep); stroke-width: 1.4; }
+.hero-art:hover .bead { fill: var(--gold); }
+.hero-art .spark { fill: none; stroke: var(--gold); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.3) rotate(-30deg); transition: opacity 0.3s, transform 0.5s cubic-bezier(0.34,1.6,0.5,1); }
+.hero-art:hover .spark { opacity: 1; transform: scale(1) rotate(0deg); }
+
+/* Ambient life at rest, more on hover */
+.hero-art .float { transition: transform 0.7s cubic-bezier(0.34,1.4,0.5,1); }
+.hero-art .f1 { animation: bob 7s ease-in-out infinite; }
+.hero-art .f2 { animation: bob 9s ease-in-out infinite 0.8s; }
+.hero-art .f3 { animation: bob 8s ease-in-out infinite 1.6s; }
+.hero-art:hover .f1 { transform: translateY(-16px); }
+.hero-art:hover .f2 { transform: translateY(-22px); }
+.hero-art:hover .f3 { transform: translateY(-12px); }
+.hero-art .drift { animation: sway 11s ease-in-out infinite; }
+
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes sway { 0%,100% { transform: translateX(0); } 50% { transform: translateX(9px); } }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { max-width: 460px; }
+}
+
+/* The in-development signup box under the headline */
+.notice {
+  border: 1px solid var(--ink);
+  padding: 1.3rem 1.4rem 1.5rem;
+  margin-top: 2rem;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.4);
+}
+.notice p { font-size: var(--step--1); margin-bottom: 1rem; }
+.notice .signup-form { margin-bottom: 0.7rem; }
+.notice .eyebrow { margin-bottom: 0.6rem; }
+.notice a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+/* ============================================================
+   28. WIDE IMAGE BAND + TOOL PAGE PHOTO
+   ============================================================ */
+
+.wide-frame {
+  border: 1px dashed var(--moss-pale);
+  aspect-ratio: 21 / 8;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.05em; color: var(--grey);
+}
+
+.tool-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+}
+.tool-shot { position: relative; }
+.frame-tall { aspect-ratio: 4 / 5; max-height: 430px; margin-left: auto; }
+.hero-art-photo { display: flex; align-items: center; }
+.hero-art-photo .frame-tall { width: 100%; }
+
+@media (max-width: 780px) { .tool-hero { grid-template-columns: 1fr; } }
+
+/* The UAD-style badge */
+.sticker {
+  position: absolute;
+  top: -18px; right: -14px;
+  width: 104px; height: 104px;
+  border-radius: 50%;
+  background: var(--tool-solid, var(--accent));
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  transform: rotate(-9deg);
+  animation: nudge 6s ease-in-out infinite;
+}
+.sticker span {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  padding: 0 0.8rem;
+}
+@keyframes nudge { 0%,100% { transform: rotate(-9deg) scale(1); } 50% { transform: rotate(-5deg) scale(1.04); } }
+
+/* ============================================================
+   29. COLOURED ROWS (courses)
+   ============================================================ */
+
+.row-hue { position: relative; overflow: hidden; }
+.row-hue::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, var(--row-hue) 78%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+a.row-hue:hover { background: transparent; }
+a.row-hue:hover::after { opacity: 1; }
+a.row-hue:hover .row-title { color: var(--row-hue); }
+a.row-hue:hover .row-index { color: var(--row-hue); }
+a.row-hue:hover .row-meta { color: #FFFFFF; }
+.row-hue > * { position: relative; z-index: 1; }
+.row-hue::after { z-index: 0; }
+
+/* The platform is large enough that a full-strength fill dominates. */
+.hero-art .riso-faint { opacity: 0.32; }
+.hero-art:hover .riso-faint { opacity: 0.5; }
+
+/* ============================================================
+   30. BIGGER SECTION LABELS
+   The mono eyebrows were too quiet to act as section headings.
+   ============================================================ */
+
+.eyebrow {
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--moss-deep);
+  margin-bottom: 1.3rem;
+}
+
+.section-label {
+  font-family: var(--head);
+  font-size: clamp(1.3rem, 1rem + 1.1vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  color: var(--ink);
+  margin-bottom: 1.8rem;
+}
+
+.nav { font-size: 0.95rem; }
+.drop a, .drop-soon { font-family: var(--head); font-size: 0.9rem; }
+
+/* ============================================================
+   31. THE NEWSLETTER NOTE
+   A drawn box that overlaps the right end of the headline by a
+   little. Not the drawing, and not by much.
+   ============================================================ */
+
+.scroll-note {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  margin-top: 2.2rem;
+}
+.note-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.note-fill { fill: var(--paper-lift); }
+.note-edge { fill: none; stroke: var(--ink); stroke-width: 1.8; }
+
+.note-body { position: relative; padding: 1.9rem 2.1rem; }
+.note-body .eyebrow { font-size: 0.66rem; margin-bottom: 0.5rem; color: var(--accent-deep); }
+.note-body p { font-size: 0.86rem; margin-bottom: 1rem; }
+.note-body .signup-form { border-bottom-color: var(--ink); }
+.note-foot { font-size: 0.74rem !important; color: var(--grey); margin: 0.7rem 0 0 !important; }
+.note-foot a { color: var(--accent-deep); }
+
+
+
+/* ============================================================
+   32. TILE TAGS
+   Sat in the dead space beside the drawing. Arrive on hover,
+   with the sparkles.
+   ============================================================ */
+
+.tile-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.tile-top .tile-art { flex: 0 0 auto; }
+
+.tile-tags {
+  list-style: none;
+  margin: 0 0 0 auto; padding: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+  text-align: right;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.5, 0.5, 1);
+}
+
+.tile:hover .tile-tags { opacity: 1; transform: translateX(0); }
+
+.ttag {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--paper);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  padding-bottom: 3px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   33. TOOL PAGE — bigger photo, big status badge
+   ============================================================ */
+
+.tool-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr); gap: clamp(1.2rem, 2.5vw, 2.2rem); align-items: start; }
+.tool-shot .frame-tall { aspect-ratio: 5 / 4; max-height: 420px; width: 100%; }
+
+.sticker {
+  position: absolute;
+  top: -22px; right: -18px;
+  width: 132px; height: 132px;
+  border-radius: 50%;
+  background: var(--tool-solid, var(--accent));
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  transform: rotate(-9deg);
+  animation: nudge 6s ease-in-out infinite;
+  border: 2px solid var(--ink);
+}
+.sticker span { font-family: var(--mono); font-size: 0.72rem; line-height: 1.35; letter-spacing: 0.03em; padding: 0 0.9rem; }
+
+/* ============================================================
+   34. LEARN — full-width video under the hero row
+   ============================================================ */
+
+.video-wide { max-width: none; margin-top: 2.6rem; }
+
+/* ============================================================
+   35. COURSE ROWS — breathing room and bolder numbers
+   ============================================================ */
+
+.row { grid-template-columns: 74px minmax(0, 1fr) auto; padding-right: 2.4rem; }
+.row-index {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--moss-pale);
+  letter-spacing: 0.02em;
+}
+a.row-hue:hover .row-index { color: var(--row-hue); }
+.row-meta { font-size: 0.68rem; }
+.row-hue::after { width: 52%; }
+
+@media (max-width: 620px) { .row { padding-right: 1rem; } }
+
+/* ============================================================
+   36. PILLARS — one colour each, alive on hover
+   ============================================================ */
+
+.pillars { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 1rem; border: 0; }
+
+.pillar {
+  position: relative;
+  border: 1.5px solid var(--pill);
+  border-bottom: 1.5px solid var(--pill);
+  border-right: 1.5px solid var(--pill);
+  padding: 1.5rem 1.4rem 2.4rem;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.5, 1), background 0.35s ease;
+}
+
+.pillar:hover { transform: translateY(-6px); background: var(--pill); }
+.pillar h3 { color: var(--pill); margin-bottom: 0.55rem; transition: color 0.3s ease; }
+.pillar:hover h3, .pillar:hover p { color: var(--paper); }
+.pillar:hover .pillar-n { color: var(--paper); opacity: 1; }
+.pillar p, .pillar-n { transition: color 0.3s ease, opacity 0.3s ease; }
+.pillar:hover .pillar-spark .spark { fill: none; stroke: var(--paper); }
+.pillar-n { color: var(--pill); opacity: 0.55; }
+
+.pillar-spark {
+  position: absolute;
+  left: 1.2rem; right: 1.2rem; bottom: 0.5rem;
+  height: 30px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34, 1.6, 0.5, 1);
+}
+.pillar-spark .spark { fill: var(--pill); stroke: none; opacity: 1; transform: none; }
+.pillar:hover .pillar-spark { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   37. ABOUT — full width lead-in, doodle portraits
+   ============================================================ */
+
+.about-lead { max-width: none; margin-bottom: 0.4rem; }
+.about-rest {
+  font-size: clamp(1.5rem, 1rem + 2.2vw, 2.9rem);
+  line-height: 1.15;
+  max-width: 24ch;
+  margin-bottom: 0;
+}
+
+
+.people-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); }
+.face-132 { width: 132px; height: 132px; }
+.face-110 { width: 110px; height: 110px; }
+.face-84 { width: 84px; height: 84px; }
+.face-72 { width: 72px; height: 72px; }
+.face { flex: 0 0 auto; }
+.face-fill { fill: var(--gold-light); stroke: none; transform: translate(5px, 5px); transition: transform 0.4s cubic-bezier(0.2,0.85,0.25,1), fill 0.35s; }
+.person:hover .face-fill { transform: translate(0, 0); fill: var(--gold); }
+.face-ring { fill: var(--paper-lift); stroke: var(--ink); stroke-width: 1.6; }
+.face .ink { fill: none; stroke: var(--ink); stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.face .dot-eye { fill: var(--ink); stroke: none; }
+/* Hair is opaque so it masks the face outline underneath. */
+.face .hair { fill: var(--paper-lift); stroke: var(--ink); stroke-width: 2.1; stroke-linejoin: round; }
+
+/* ============================================================
+   38. PORTRAITS COME ALIVE
+   Neutral and monochrome at rest. On hover the face takes its
+   own colour and the mouth changes to a smile.
+   ============================================================ */
+
+.face-fill { fill: var(--gold-light); }
+.face-ring { fill: var(--paper-lift); transition: fill 0.35s ease; }
+.face .hair { transition: fill 0.35s ease, stroke 0.35s ease; }
+.face .ink { transition: stroke 0.35s ease; }
+.face .dot-eye { transition: fill 0.35s ease; }
+
+.mouth-smile { opacity: 0; transition: opacity 0.25s ease; }
+.mouth-flat { opacity: 1; transition: opacity 0.25s ease; }
+
+.person:hover .mouth-smile { opacity: 1; }
+.person:hover .mouth-flat { opacity: 0; }
+
+.person:hover .face-fill { fill: var(--face-hue); }
+.face .dot-eye { fill: var(--ink); }
+.person:hover .face-ring { fill: var(--face-tint); }
+.person:hover .face .hair { fill: #FFFFFF; stroke: var(--ink); }
+.person:hover .face .ink { stroke: var(--ink); }
+.person:hover .face .dot-eye { fill: var(--ink); }
+.person:hover .face-ring { stroke: var(--face-hue); }
+.person:hover .face-ring { stroke: var(--face-hue); }
+
+.person { cursor: default; }
+
+/* ============================================================
+   39. TAGS AS SKETCH BOXES
+   Drawn rectangles rather than discs, so a tag matches the line
+   drawings instead of looking like a button.
+   ============================================================ */
+
+.sketch {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sketch path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.tile-tags { gap: 0.55rem; align-items: flex-end; }
+
+.ttag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.85rem;
+  min-width: 96px;
+  color: #FFFFFF;
+}
+
+.ttag span {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  text-align: center;
+  color: inherit;
+}
+
+.tile .ttag { color: var(--tool-hue, var(--accent)); }
+.tile:hover .ttag { color: #FFFFFF; }
+
+/* On a tool page they alternate filled and outlined. */
+.tags-box { gap: 0.7rem; align-items: center; }
+
+.tag-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  min-width: 104px;
+  color: var(--tool-hue, var(--accent));
+}
+
+.tag-box span {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  text-align: center;
+}
+
+.tag-solid .sketch path { fill: var(--tool-hue, var(--accent)); }
+.tag-solid span { color: #FFFFFF; }
+.tag-hollow .sketch path { fill: #FFFFFF; }
+
+/* ============================================================
+   40. PHOTOGRAPHS
+   ============================================================ */
+
+.photo { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.photo-tall { aspect-ratio: 4 / 5; object-fit: cover; max-height: 430px; margin-left: auto; }
+
+/* Speaker cones in the hero drawing */
+.hero-art .cone { fill: none; stroke: var(--moss-deep); stroke-width: 1.2; }
+.hero-art .fill-solid { fill: var(--moss-deep); stroke: none; }
+.hero-art:hover .cone { stroke: var(--moss); }
+
+/* ============================================================
+   41. HERO DRAWING — a colour per part on hover
+   ============================================================ */
+
+.hero-art .pt-platform,
+.hero-art .pt-slab,
+.hero-art .pt-speaker,
+.hero-art .pt-signal,
+.hero-art .pt-sine,
+.hero-art .pt-box1 path,
+.hero-art .pt-box2 path,
+.hero-art .pt-box3 path { transition: stroke 0.4s ease; }
+
+/* Lines never change. Only the offset fills take colour. */
+.hero-art .riso { transition: transform 0.6s cubic-bezier(0.2,0.85,0.25,1), fill 0.45s ease; }
+/* The platform keeps its original fill. */
+.hero-art:hover .f-slab          { fill: #B94A24; }
+.hero-art:hover .f-spk1          { fill: #4F7942; }
+.hero-art:hover .f-spk2          { fill: #33658A; }
+.hero-art:hover .f-spk3          { fill: #FFFFFF; }
+.hero-art:hover .pt-box1 .f-box  { fill: #E3A347; }
+.hero-art:hover .pt-box2 .f-box  { fill: #7A51B1; }
+.hero-art:hover .pt-box3 .f-box  { fill: #B94A24; }
+.hero-art:hover .pt-signal { stroke: var(--moss-deep); }
+
+.hero-art:hover .cone { stroke: var(--moss-deep); }
+
+.hero-art .sine { stroke-width: 1.6; fill: none; }
+
+/* ============================================================
+   42. PHOTOGRAPHS
+   Outlined like the drawings, with the frame sitting a little
+   off the edge of the picture rather than flush to it. Same
+   misregistration as the fills inside the line drawings.
+   ============================================================ */
+
+.photo-frame { position: relative; display: block; }
+
+.photo-frame::after {
+  content: "";
+  position: absolute;
+  inset: -14px -14px 6px 6px;
+  border: 1.5px solid var(--ink);
+  pointer-events: none;
+}
+
+.photo-frame img { display: block; width: 100%; height: auto; object-fit: cover; position: relative; }
+
+.photo-feathered { aspect-ratio: 5 / 4; max-height: 520px; }
+.photo-wide { aspect-ratio: 21 / 8; }
+
+@media (max-width: 700px) { .photo-frame::after { inset: -8px -8px 4px 4px; } }
+
+/* ============================================================
+   43. PAGE LABELS
+   ============================================================ */
+
+.page-label {
+  display: block;
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 0.85rem + 0.75vw, 1.5rem);
+  letter-spacing: -0.01em;
+  text-transform: lowercase;
+  color: var(--label-hue, var(--accent));
+  margin: 0 0 1.1rem;
+}
+
+/* Josh's portrait links out */
+.face-link { display: block; text-decoration: none; }
+.person-link { color: inherit; text-decoration: none; transition: color 0.2s; }
+.person-link:hover { color: var(--face-hue, var(--accent)); }
+
+
+/* ============================================================
+   44. DRIFTING WAVEFORMS
+   Four wave shapes moving like clouds, spread over the whole
+   window. They sit above the page so a pointer can reach them,
+   but only the line itself is hittable. Touch one and it goes.
+   ============================================================ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wave-drift {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+  animation-name: cross;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  transition: opacity 0.85s ease, filter 0.85s ease;
+}
+
+.wave-line {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.22;
+  transition: opacity 0.9s ease;
+}
+
+/* Bits that come off the line as it breaks up. */
+.wave-bit {
+  opacity: 0;
+  animation-name: puff;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes puff {
+  0%   { opacity: 0.3; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+}
+
+/* Invisible, wide, and the only part that catches the pointer. */
+.wave-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 20;
+  pointer-events: stroke;
+  cursor: crosshair;
+}
+
+.wave-drift.is-gone { pointer-events: none; }
+.wave-drift.is-gone .wave-line { opacity: 0; filter: blur(5px); }
+
+@keyframes cross {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100vw); }
+}
+
+@keyframes cross-back {
+  from { transform: translateX(100vw) scaleX(-1); }
+  to   { transform: translateX(-100%) scaleX(-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop { display: none; }
+}
+
+/* ============================================================
+   45. THE NEWSLETTER NOTE — colour, kept quiet
+   Muted enough that the headline and the drawing still lead.
+   ============================================================ */
+
+.note-fill { fill: #F3EDDC; }
+.note-edge { stroke: var(--ink); }
+
+
+
+.note-body .eyebrow { color: #B94A24; }
+.note-body .signup-form { border-bottom-color: var(--ink); }
+.note-body .signup-form button { color: #33658A; }
+.note-body .signup-form button:hover { color: #C04334; }
+.note-foot a { color: #7A51B1; text-decoration: none; font-weight: 600; }
+.note-foot a:hover { color: var(--ink); }
+
+/* Collaboration credit on a tool page */
+.collab {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--grey);
+  margin: -0.6rem 0 1.2rem;
+}
+.collab a { color: var(--tool-hue, var(--accent)); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+.collab a:hover { color: var(--ink); }
+
+.role-link { color: #C44536; text-decoration: none; border-bottom: 1px solid currentColor; }
+.role-link:hover { color: #8F2F24; }
+
+/* ============================================================
+   46. TOOL PAGE TAG DISCS
+   Alternating solid and outlined, so a tag never reads as a link.
+   ============================================================ */
+
+.tags-disc { gap: 0.7rem; align-items: center; }
+
+.tag-disc {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 0.5rem;
+  border: 0;
+}
+
+.tag-disc span {
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  word-break: break-word;
+}
+
+.tag-solid { background: var(--tool-hue, var(--accent)); }
+.tag-solid span { color: #FFFFFF; }
+
+.tag-hollow { background: #FFFFFF; border: 1.5px solid var(--tool-hue, var(--accent)); }
+.tag-hollow span { color: var(--tool-hue, var(--accent)); }
+
+
+
+/* ============================================================
+   47. RELEASE BADGE — a star, not a circle
+   ============================================================ */
+
+.sticker {
+  position: absolute;
+  top: -34px; right: -34px;
+  width: 210px; height: 210px;
+  border-radius: 0;
+  border: 0;
+  background: var(--tool-solid, var(--accent));
+  color: #FFFFFF;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  transform: rotate(-8deg);
+  animation: nudge 6s ease-in-out infinite;
+  clip-path: polygon(50% 0%, 57% 26%, 66% 34%, 74% 43%, 100% 50%, 74% 57%, 66% 66%, 57% 74%, 50% 100%, 43% 74%, 34% 66%, 26% 57%, 0% 50%, 26% 43%, 34% 34%, 43% 26%);
+}
+
+.sticker span { font-size: 0.62rem; line-height: 1.45; padding: 0 3.4rem; }
+
+@keyframes nudge {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50%      { transform: rotate(-4deg) scale(1.04); }
+}
+
+.nowrap { white-space: nowrap; }
+
+/* ============================================================
+   48. NOT OUT YET
+   Unreleased tools are not links. A white star rises over the
+   tile on hover, using the same mark as the sparkles.
+   ============================================================ */
+
+.tile-soon { cursor: default; }
+
+.soon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.soon-star,
+.soon-text {
+  grid-area: 1 / 1;
+  transform: scale(0.78) rotate(calc(var(--spin, 0deg) - 7deg));
+  transition: transform 0.75s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+
+.soon-star {
+  width: 168px;
+  height: 168px;
+  overflow: visible;
+}
+
+.soon-star path { fill: none; stroke: #FFFFFF; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+
+.soon-text {
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  line-height: 1.3;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: #FFFFFF;
+  align-self: center;
+  justify-self: center;
+}
+
+.tile-soon:hover .soon { opacity: 1; }
+.tile-soon:hover .soon-star,
+.tile-soon:hover .soon-text { transform: scale(1) rotate(var(--spin, 0deg)); }
+
+/* The badge on a tool page is the same star. */
+.sticker {
+  position: absolute;
+  top: -26px; right: -22px;
+  width: 190px; height: 190px;
+  border: 0;
+  border-radius: 0;
+  background: var(--tool-solid, var(--accent));
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  transform: rotate(-8deg);
+  animation: nudge 6s ease-in-out infinite;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 93%, 50% 71%, 21% 93%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.sticker span {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  text-align: center;
+  width: 96px;
+  margin-top: -1.1rem;
+  padding: 0;
+}
+
+@keyframes nudge {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50%      { transform: rotate(-4deg) scale(1.04); }
+}
+
+/* Unreleased entries in the dropdown */
+/* Matches .drop a exactly, minus the link. The dot stays a dot. */
+.drop-soon {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.62rem 0.85rem;
+  font-family: var(--head);
+  font-size: 0.9rem;
+  color: var(--grey-light);
+  cursor: default;
+}
+.drop-soon .dot { opacity: 0.45; }
+.drop-soon::after { content: "soon"; margin-left: auto; font-size: 0.62rem; color: var(--grey-light); }
+
+/* The three looks, on every tool page */
+.modes {
+  border-left: 3px solid var(--tool-hue, var(--accent));
+  padding-left: 1rem;
+  font-size: var(--step--1);
+  color: var(--moss-deep);
+  margin-top: 1.4rem;
+}
+.modes strong { color: var(--tool-hue, var(--accent)); }
+
+/* ============================================================
+   49. THE THREE MODES, INLINE
+   "light" and "dark" are set as chips rather than coloured type:
+   a genuinely light colour cannot carry text on this ground, so
+   the colour goes behind the word and the word stays readable.
+   ============================================================ */
+
+.lede-wide { max-width: none; margin-bottom: 2.2rem; }
+
+.m-light, .m-dark {
+  display: inline-block;
+  padding: 0.02em 0.4em;
+  line-height: 1.25;
+}
+
+.m-light { background: var(--gold-light); color: var(--ink); }
+.m-dark { background: var(--ink); color: var(--paper); }
+
+/* ============================================================
+   50. PHOTOGRAPHS — a gold block behind, snapping into register
+   Same behaviour as the fills inside the line drawings.
+   ============================================================ */
+
+.photo-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gold-light);
+  transform: translate(16px, 16px);
+  transition: transform 0.55s cubic-bezier(0.2, 0.85, 0.25, 1), background 0.4s ease;
+  z-index: 0;
+}
+
+.photo-frame:hover::before { transform: translate(5px, 6px); background: var(--gold); }
+.photo-frame img {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.55s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+
+/* The outline sits up and to the right, so the picture leans that way. */
+.photo-frame:hover img { transform: translate(8px, -9px); }
+.photo-frame::after { z-index: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-frame::before, .photo-frame img { transition: none; }
+}
+
+/* ============================================================
+   51. THE SIGNAL BEADS
+   ============================================================ */
+
+.hero-art:hover .bead { fill: var(--ink); stroke: var(--ink); }
+
+/* Josh's credit takes Clipped's colour */
+.role-link { color: #C04334; border-bottom: 0; text-decoration: none; font-weight: 600; }
+.role-link:hover { color: #772E25; }
+
+/* ============================================================
+   52. STARS ON A PHOTOGRAPH
+   These were in the markup with no rules, so they sat in flow at
+   full width and stretched the frame. They are decoration: taken
+   out of flow, tucked into the top corners, and only on hover.
+   ============================================================ */
+
+.photo-spark {
+  position: absolute;
+  top: -22px;
+  width: 66px;
+  height: 66px;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ps-left  { left: -20px; }
+.ps-right { right: -20px; }
+
+.photo-spark path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.3) rotate(-30deg);
+  transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.3, 1.3, 0.4, 1);
+}
+
+.photo-frame:hover .photo-spark path { opacity: 1; transform: scale(1) rotate(0deg); }
+.photo-frame:hover .ps-right path { transition-delay: 0.1s; }
+.photo-frame:hover .photo-spark path:nth-child(2) { transition-delay: 0.18s; }
+
+
+/* ============================================================
+   53. SMALL SCREENS
+   The release badge hangs outside its box by design, which is
+   fine on a desktop and pushes the page sideways on a phone.
+   ============================================================ */
+
+@media (max-width: 620px) {
+  .sticker {
+    width: 132px;
+    height: 132px;
+    top: -14px;
+    right: 0;
+  }
+  .sticker span { font-size: 0.52rem; width: 70px; margin-top: -0.8rem; }
+  .tool-shot { overflow: visible; }
+}
+
+/* Nothing may push the document sideways.
+   `clip` rather than `hidden`: hidden creates a scroll container on
+   the ancestor, which silently disables position:sticky further down. */
+html { overflow-x: clip; }
+body { overflow-x: clip; }
+
+
+/* ============================================================
+   54. NO UNDERLINES, ANYWHERE
+   A link announces itself by changing colour or weight, never
+   by a rule under the words.
+   ============================================================ */
+
+a { text-decoration: none; }
+a:hover { text-decoration: none; }
+.signup-note a, .lede a, p a { color: var(--accent); font-weight: 600; transition: color 0.2s; }
+.signup-note a:hover, .lede a:hover, p a:hover { color: var(--ink); }
+
+/* ============================================================
+   55. BEADS, BADGE, BUTTONS, PHOTOGRAPHS
+   ============================================================ */
+
+/* Alternating: every other one is an empty ring. */
+.hero-art:hover .bead, .art-collab:hover .bead { fill: var(--ink); stroke: var(--ink); }
+
+/* The release badge uses the four-point mark, like every other star. */
+.sticker {
+  clip-path: none;
+  background: none;
+  border: 0;
+  width: 176px;
+  height: 176px;
+  top: -28px;
+  right: -24px;
+  display: grid;
+  place-items: center;
+}
+
+.sticker-star {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sticker-star path { fill: var(--tool-solid, var(--accent)); stroke: none; }
+
+.sticker span {
+  grid-area: 1 / 1;
+  position: relative;
+  color: #FFFFFF;
+  font-weight: 500;
+  width: 84px;
+  margin-top: 0;
+  font-size: 0.6rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* Buttons carry more weight, and are the same size everywhere. */
+.btn {
+  font-size: 0.9rem;
+  padding: 0.9rem 1.4rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Photographs: brand-tinted at rest, full colour on hover. */
+.photo-frame img {
+  filter: grayscale(1) contrast(0.88) brightness(0.62) sepia(1) hue-rotate(178deg) saturate(1.15);
+  transition: transform 0.55s cubic-bezier(0.2, 0.85, 0.25, 1), filter 0.55s ease;
+}
+
+.photo-frame:hover img { filter: none; }
+
+/* The stars sit outside the picture, small, in the corners. */
+.photo-spark { width: 44px; height: 44px; top: -40px; }
+.ps-left  { left: -34px; }
+.ps-right { right: -34px; }
+
+@media (max-width: 700px) {
+  .photo-spark { width: 32px; height: 32px; top: -26px; }
+  .ps-left { left: -14px; }
+  .ps-right { right: -14px; }
+}
+
+/* ============================================================
+   56. ABOUT — the drawing, and the contact box
+   ============================================================ */
+
+.art-collab > svg { width: 100%; height: auto; }
+.art-collab .pt-canvas, .art-collab .pt-speaker, .art-collab .pt-signal { transition: stroke 0.4s ease; }
+.art-collab .f-canvas { fill: var(--gold-light); }
+.art-collab:hover .f-canvas { fill: #7A51B1; }
+.art-collab:hover .f-speaker { fill: #197278; }
+
+.callout {
+  position: relative;
+  display: inline-block;
+  padding: 1.5rem 2rem;
+  margin-top: 2rem;
+  color: var(--moss);
+}
+
+.callout p {
+  position: relative;
+  margin: 0;
+  font-size: var(--step-1);
+  color: var(--ink);
+  max-width: none;
+}
+
+.callout a { color: var(--accent); font-weight: 600; }
+.callout a:hover { color: var(--gold); }
+
+/* "artist" keeps the same lift as the headline letters. */
+.movers .l { transition: transform 0.4s cubic-bezier(0.34, 1.5, 0.5, 1); }
+.movers:hover .l { transform: translateY(-3px); }
+.movers:hover .l:nth-child(2n) { transform: translateY(3px); }
+.movers:hover .l:nth-child(3n) { transform: translateY(-5px); }
+
+/* ============================================================
+   57. TOOL PAGE TAGS
+   A drawn mark and a word. No box, no rule, nothing that could
+   be mistaken for a link.
+   ============================================================ */
+
+.tags-mark { display: flex; flex-wrap: wrap; gap: 1.6rem; align-items: center; }
+
+.tag-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tag-mark svg {
+  width: 13px;
+  height: 13px;
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+.tag-mark svg path { fill: none; stroke: var(--tool-hue, var(--accent)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+
+.tag-mark span {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--moss-deep);
+}
+
+/* ============================================================
+   58. THE CONTACT BUTTON
+   A real link. Fills, lifts, and swaps colour on hover.
+   ============================================================ */
+
+.callout {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #2B5474;
+  color: #FFFFFF;
+  text-decoration: none;
+  transition: background 0.25s ease, transform 0.25s ease, color 0.25s ease;
+}
+
+.callout .sketch { display: none; }
+
+.callout span {
+  font-size: var(--step-0);
+  color: inherit;
+}
+
+.callout strong { color: var(--gold-light); font-weight: 600; transition: color 0.25s ease; }
+
+.callout:hover { background: var(--gold); color: var(--ink); transform: translateY(-3px); }
+.callout:hover strong { color: var(--ink); }
+
+/* ============================================================
+   59. HERO DRAWING — grid, guides, and the drop on hover
+   ============================================================ */
+
+.hero-art .pt-grid { stroke: var(--moss-mid); opacity: 0.75; }
+.hero-art .drop-line { stroke: var(--moss); opacity: 0.5; stroke-width: 0.9; }
+.hero-art:hover .drop-line { opacity: 0.85; }
+
+/* The signal drops toward the grid on hover, like the leveler drawing. */
+.gain-drop { transition: transform 0.6s cubic-bezier(0.34, 1.35, 0.5, 1); }
+.hero-art:hover .gain-drop { transform: translateY(18px); }
+
+/* Sound coming back off the monitor on the About drawing. */
+.art-collab .arc { fill: none; stroke: var(--moss-deep); stroke-width: 1.2; opacity: 0.55; }
+.art-collab .smooth { stroke-linecap: round; }
+.art-collab:hover .a1 { stroke: #C04334; }
+.art-collab:hover .a2 { stroke: #E3A347; }
+.art-collab:hover .a3 { stroke: #33658A; }
+
+/* More air between the last person and the contact box. */
+.callout-spaced { margin-top: 3rem; }
+
+/* ============================================================
+   60. GOLD UNDER THE GRID
+   Same behaviour as the fills inside every other drawing.
+   ============================================================ */
+
+.hero-art .f-grid { fill: var(--gold-light); }
+.hero-art:hover .f-grid { fill: var(--gold); }
+
+/* ============================================================
+   61. ARTISTS ROW — people left, the invitation right
+   ============================================================ */
+
+.artists-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(min(100%, 340px), 0.8fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+}
+
+.artists-row { align-items: stretch; }
+.artists-row .callout { margin-top: 0; justify-self: stretch; align-self: end; }
+
+@media (max-width: 820px) {
+  .artists-row { grid-template-columns: 1fr; }
+  .artists-row .callout { justify-self: start; margin-top: 1.5rem; }
+}
+
+/* Solid waves off the monitor on the About drawing. */
+.art-collab .arc-solid { fill: none; stroke: var(--moss-deep); stroke-width: 1.2; opacity: 0.7; }
+.art-collab:hover .s1 { stroke: #C04334; }
+.art-collab:hover .s2 { stroke: #B94A24; }
+.art-collab:hover .s3 { stroke: #E3A347; }
+
+/* ============================================================
+   62. TOOL MEDIA
+   The plug-in running, and stills from it. Same drawn frame and
+   offset gold as every other picture on the site.
+   ============================================================ */
+
+.shot-frame { display: block; }
+
+.tool-video,
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 1;
+  background: var(--ink);
+}
+
+/* The interface is already the brand's colours, so it is not tinted. */
+.shot-frame img, .tool-video { filter: none; }
+.shot-frame:hover img, .shot-frame:hover .tool-video { filter: none; }
+
+.tool-shot .shot-frame { max-width: 330px; margin-left: auto; }
+
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 2.2rem;
+  align-items: start;
+}
+
+/* Two buttons on a tool page share one width. */
+/* Header versions and per-version downloads sit on one line. */
+.tool-page .btn-row .btn { min-width: 132px; text-align: center; }
+.versions .btn-row { flex-wrap: nowrap; }
+.versions .btn { flex: 1 1 0; min-width: 0; }
+
+@media (max-width: 480px) {
+  .tool-page .btn-row .btn { min-width: 0; flex: 1 1 100%; }
+}
+
+/* ============================================================
+   63. VERSIONS
+   Each way of running a tool gets a section: what it is, how to
+   get it, what it does, and pictures of it.
+   ============================================================ */
+
+.versions-label {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--grey);
+  margin: 0 0 0.6rem;
+}
+
+.version-summary { max-width: none; margin-bottom: 0.4rem; }
+
+.version {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+  margin-top: 1.6rem;
+}
+
+.version-info h3 { margin: 0 0 0.7rem; font-size: 1rem; }
+.version-info h3 + .btn-row { margin-bottom: 1.6rem; }
+.version-info .specs { margin-top: 0; }
+
+.version-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 1.6rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) { .version { grid-template-columns: 1fr; } }
+
+/* Pictures are much smaller than they were. */
+.tool-shot .shot-frame { max-width: 330px; }
+.version-shots .shot-frame { max-width: 190px; }
+.version-shots { justify-content: start; }
+
+/* The plug-in shot sits still: no drift, no moving shadow. */
+.no-shift::before, .no-shift::after, .shot-frame.no-shift::before { display: none; }
+.no-shift img { background: none; }
+.no-shift img { transition: none; }
+.no-shift:hover img { transform: none; }
+.tool-shot .shot-frame::before { display: none; }
+.tool-shot .shot-frame:hover .tool-video { transform: none; }
+.tool-shot .shot-frame .tool-video { transition: none; }
+
+/* The release badge sits over the picture, not under it. */
+.sticker { z-index: 6; }
+.tool-shot { position: relative; z-index: 5; }
+
+/* ============================================================
+   64. THE BROWSER PAGE
+   Plug-in in the middle, advertising either side and below.
+   ============================================================ */
+
+.browser-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(min(100%, 320px), 0.7fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: end;
+}
+
+.browser-title { font-family: var(--display); font-size: clamp(1.6rem, 1.1rem + 2vw, 2.8rem); margin-bottom: 1rem; }
+.browser-note { font-size: var(--step--1); color: var(--moss-deep); }
+.browser-note strong { color: var(--tool-hue); }
+
+.browser-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 300px;
+  gap: clamp(1rem, 2.5vw, 2rem);
+  align-items: start;
+  justify-content: center;
+  padding: 1rem 0 2.5rem;
+}
+
+.stage {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  aspect-ratio: 460 / 720;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-lift);
+  display: grid;
+  place-items: center;
+}
+
+.stage iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+.stage-empty { text-align: center; color: var(--grey); }
+.stage-empty p { margin: 0; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em; }
+.stage-hint { margin-top: 0.4rem !important; color: var(--grey-light); }
+
+.ad {
+  border: 1px dashed var(--moss-pale);
+  display: grid;
+  place-items: center;
+  color: var(--grey-light);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.ad-rail { aspect-ratio: 300 / 600; position: sticky; top: 6rem; }
+.ad-banner { width: 100%; max-width: 970px; margin: 0 auto; aspect-ratio: 970 / 250; }
+
+@media (max-width: 1180px) {
+  .browser-layout { grid-template-columns: minmax(0, 1fr); }
+  .ad-rail { display: none; }
+}
+
+/* ============================================================
+   65. THE LOGO
+   A drawn mark now, not type. The header carries the version
+   with light letters; the gold i is part of the artwork.
+   ============================================================ */
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  padding: 0.2rem 0;
+}
+
+.wordmark .logo {
+  display: block;
+  height: 26px;
+  width: auto;
+  transition: opacity 0.2s ease;
+}
+
+.wordmark:hover .logo { opacity: 0.78; }
+
+@media (max-width: 620px) { .wordmark .logo { height: 22px; } }
+
+/* ============================================================
+   66. TEMPLATE PAGE ADDITIONS
+   ============================================================ */
+
+/* The session screenshot keeps its own proportions so the tracks
+   stay readable, rather than being cropped to a portrait shape. */
+.photo-session {
+  display: block;
+  width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* A button with nothing behind it yet. Looks like a button, says so,
+   and does not pretend to be a link. */
+.btn-off {
+  display: inline-block;
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.9rem 1.4rem;
+  border: 1px dashed var(--moss-pale);
+  background: transparent;
+  color: var(--grey);
+  cursor: default;
+}
+
+/* ---- the spatial panner ---- */
+.tile-art .spk, .tool-art .spk { fill: var(--moss); stroke: none; }
+.tile:hover .tile-art .spk { fill: var(--paper); }
+.tile-art .puck, .tool-art .puck { stroke-width: 1.4; }
+
+/* ---- the waveform in a track lane ---- */
+.tile-art .wf, .tool-art .wf { stroke-width: 1.1; opacity: 0.8; stroke-linecap: round; }
+
+/* ============================================================
+   67. THE LOGO, READ AT A GLANCE
+   The drawn mark has a squiggle for the i, which needs a little
+   more height than a set wordmark did to be seen at all.
+   ============================================================ */
+
+.wordmark .logo { height: 34px; }
+.mark img { height: 36px; }
+
+@media (max-width: 620px) {
+  .wordmark .logo { height: 26px; }
+  .mark img { height: 28px; }
+}
+
+/* ============================================================
+   68. BUTTONS START WITH A CAPITAL
+   One rule rather than capitalising every string by hand, so a
+   button added later follows without anyone remembering to.
+   ============================================================ */
+
+.btn::first-letter,
+.btn-off::first-letter,
+.signup-form button::first-letter,
+.filter::first-letter { text-transform: uppercase; }
+
+/* ============================================================
+   69. PRICES ON A TOOL PAGE
+   ============================================================ */
+
+.tool-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tool-price {
+  font-family: var(--head);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.9rem);
+  color: var(--tool-hue, var(--accent));
+  margin: 0;
+  white-space: nowrap;
+}
+
+.version-pick { display: inline-flex; flex-direction: column; align-items: stretch; gap: 0.4rem; }
+
+.version-price {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+  text-align: center;
+}
+
+/* ============================================================
+   70. THE TEMPLATES HERO PHOTOGRAPH
+   Cropped narrower so it stands taller, and given more of the row.
+   ============================================================ */
+
+.hero-art-tall .photo-frame { max-width: 560px; margin-left: auto; }
+
+/* A lone screenshot is usually a wide one, so it gets more room than
+   the portrait pairs do. */
+.version-shots .shot-frame:only-child { max-width: 420px; }
+
+/* Room between a gallery and whatever follows it. */
+.shots { margin-bottom: 1.8rem; }
+
+/* ============================================================
+   71. PAGES THAT LEAD WITH A PHOTOGRAPH
+   Learn and Templates both open with a picture beside the title.
+   Centring each column independently put the picture in a
+   different place on each page, because the text columns are
+   different lengths. Aligning both to the top makes them match
+   whatever the copy does.
+   ============================================================ */
+
+.hero-photo { align-items: start; }
+.hero-photo .hero-art-photo { align-items: flex-start; padding-top: 0.85rem; }
+
+/* ============================================================
+   72. PRICE BESIDE A VERSION HEADING
+   ============================================================ */
+
+.price-chip {
+  display: inline-block;
+  margin-left: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+  background: var(--tool-hue, var(--accent));
+  color: #FFFFFF;
+}
+
+/* ============================================================
+   73. THE SIDE NAV CLEARS THE STICKY HEADER
+   It was sticking 2.2rem from the top of the window, which is
+   inside the header, so the first item or two slid underneath
+   the blue bar as you scrolled. Both the header and this offset
+   now read the same number, so they can never disagree again.
+   ============================================================ */
+
+:root { --header-h: 77px; }
+
+.sidenav { top: calc(var(--header-h) + 1.6rem); }
+
+/* An anchor jump has to land below the header too. */
+.chunk { scroll-margin-top: calc(var(--header-h) + 1.4rem); }
+
+@media (max-width: 620px) { :root { --header-h: 70px; } }
+
+/* ============================================================
+   74. THE TWO HERO PHOTOGRAPHS ARE THE SAME SHAPE
+   Learn's picture is portrait and the session screenshot is
+   landscape, so at equal width they came out different heights.
+   Both now sit in the same 5:4 frame and crop to fill it.
+   ============================================================ */
+
+.photo-session { aspect-ratio: 5 / 4; object-fit: cover; }
+
+/* ============================================================
+   75. A SECONDARY BUTTON
+   Outline only, so release notes never competes with a download.
+   It fills on hover, the way every other button does.
+   ============================================================ */
+
+.btn-outline {
+  background: transparent;
+  color: var(--tool-hue, #2B5474);
+  border-color: var(--tool-hue, #2B5474);
+}
+
+.btn-outline:hover {
+  background: var(--tool-hue, #2B5474);
+  border-color: var(--tool-hue, #2B5474);
+  color: #FFFFFF;
+}
+
+/* A label that owns its own capitals — macOS, iOS — opts out of the
+   first-letter rule, which would otherwise write them Apple's wrong way. */
+.btn-asis::first-letter { text-transform: none; }
+
+/* ============================================================
+   76. ONE OPENING RHYTHM ON EVERY MAIN PAGE
+   Home, Learn, Templates and About now open the same way: the
+   title and the picture sit in a block the height of the window
+   below the header, centred, so the next section begins exactly
+   at the fold and nothing peeks over it. The padding is lighter
+   on top than underneath, which lifts the block slightly toward
+   the header rather than leaving it stranded in the middle.
+   ============================================================ */
+
+.band-hero {
+  min-height: calc(100vh - var(--header-h) - 4rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: clamp(1.2rem, 2.6vw, 2.2rem);
+  padding-bottom: clamp(2.2rem, 4.5vw, 3.6rem);
+}
+
+/* Once past the opening, the page closes up: the sections that
+   follow were carrying hero-sized air for no reason. */
+.band-hero + .band { padding-top: clamp(1.8rem, 3.2vw, 2.6rem); }
+.band { padding: clamp(2rem, 4vw, 3.2rem) 0; }
+.band-tight { padding-top: clamp(1.6rem, 3vw, 2.4rem); padding-bottom: clamp(1.4rem, 2.6vw, 2.2rem); }
+
+/* A short window is not worth centring into: let it flow. */
+@media (max-height: 620px), (max-width: 780px) {
+  .band-hero { min-height: 0; display: block; }
+}
+
+/* ============================================================
+   77. SHORTER TILES, SO MORE OF THE SHELF IS VISIBLE
+   The drawing moves to the left of the words instead of sitting
+   above them, and the tags lie along the bottom in a row rather
+   than stacking down the right. That takes roughly a third off
+   the height of every tile, which puts six tools on screen at
+   once instead of three.
+   ============================================================ */
+
+.tile { min-height: 0; padding: 1.4rem 1.3rem 1.2rem; gap: 0.9rem; }
+
+.tile-body { display: flex; align-items: flex-start; gap: 1.1rem; }
+.tile-body .tile-art {
+  height: 86px;
+  width: 86px;
+  flex: 0 0 86px;
+  justify-content: center;
+}
+.tile-copy { min-width: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.tile-copy .tile-name { font-size: 1.15rem; }
+.tile-copy .tile-desc { font-size: 0.82rem; line-height: 1.4; }
+
+.tile-foot {
+  margin-top: auto;
+  padding-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+}
+
+/* The tags now live here, laid out across rather than down. */
+.tile-foot .tile-tags {
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  gap: 0.4rem;
+  opacity: 1;
+  transform: none;
+}
+.tile-foot .ttag { min-width: 0; padding: 0.3rem 0.55rem; }
+.tile-foot .ttag span { font-size: 0.5rem; }
+
+/* Status and the arrow hold the right-hand end of the same row. */
+.tile-foot .status { margin-left: auto; }
+.tile-foot .tile-go { flex: 0 0 auto; }
+
+/* Four templates to a row on a wide screen, three on a laptop. */
+.grid-tpl { grid-template-columns: repeat(auto-fill, minmax(min(100%, 285px), 1fr)); }
+
+@media (max-width: 560px) {
+  .tile-body { gap: 0.85rem; }
+  .tile-body .tile-art { height: 68px; width: 68px; flex-basis: 68px; }
+  .tile-foot .status { margin-left: 0; }
+}
+
+/* ============================================================
+   78. THE FILTER ROW STAYS WITHIN REACH
+   Scrolling the template shelf used to scroll the filters away,
+   so narrowing the list meant scrolling back up first.
+   ============================================================ */
+
+.filters-stick {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 20;
+  margin-bottom: 1.6rem;
+  padding: 0.75rem 0 0.7rem;
+  background: var(--paper);
+  border-bottom: var(--rule);
+}
+
+/* ============================================================
+   79. THE OUTLINE BUTTON HOVERS LIKE THE FILLED ONES
+   ============================================================ */
+
+.btn-outline:hover {
+  background: #E3A347;
+  border-color: #E3A347;
+  color: var(--ink);
+}
+
+/* ============================================================
+   80. THREE LOOKS
+   The same boxes the About page uses for its values, so the idea
+   is stated the same way wherever it appears.
+   ============================================================ */
+
+.looks-head {
+  font-family: var(--head);
+  font-size: 1.05rem;
+  margin: 1.8rem 0 0.9rem;
+}
+
+.looks { margin-top: 0; }
+.looks .pillar p { font-size: 0.84rem; }
+
+/* A spec value may carry a line break where two things are being
+   told apart, so the second line needs room to read as its own thing. */
+.specs dd br { display: block; content: ""; margin-top: 0.45rem; }
+
+/* The two halves of the opening share a centre line: whatever the words
+   do, the drawing sits level with the middle of them rather than riding
+   above or below. The minimum height keeps that centre in the same place
+   from page to page, so the four main pages open alike. */
+.band-hero .hero { align-items: center; min-height: 500px; }
+.band-hero .hero-art { display: flex; align-items: center; }
+.band-hero .hero-art > svg { max-height: 460px; }
+
+/* An accent word is built one letter at a time, which let the browser
+   break it mid-word: "ALREADY WOR / KS". It holds together now. */
+.starred { white-space: nowrap; }
+
+/* Four templates to a row on a wide screen. */
+.grid-tpl { grid-template-columns: repeat(auto-fill, minmax(min(100%, 262px), 1fr)); }
+
+/* A little air between the status and the arrow at the end of a tile. */
+.tile-foot .status { margin-left: auto; margin-right: 0.3rem; }
+
+/* The tile footer is two rows, always: the tags across the top of it, then
+   the format and the arrow. At four tiles to a row a single line could not
+   hold all three, and the pieces wrapped in a different order per tile. */
+.tile-foot .tile-tags { flex: 1 1 100%; }
+.tile-foot .status { margin-left: 0; margin-right: auto; }
+.tile-foot .tile-go { margin-left: auto; }
+
+/* The "in development" burst was drawn for the old tall tile, where it had
+   an empty middle to sit in. The short tile has no empty middle, so the
+   burst is stamped over the drawing instead: the one part of the tile that
+   is never type, so nothing it covers has to be read. */
+.tile-soon .soon {
+  inset: 1.4rem auto auto 1.3rem;   /* the tile's own top and left padding */
+  width: 86px;                       /* the drawing's box, exactly */
+  height: 86px;
+  place-items: center;
+}
+.soon-star { width: 86px; height: 86px; }
+.soon-text { font-size: 0.46rem; }
+
+@media (max-width: 560px) {
+  .tile-soon .soon { inset: 1.4rem auto auto 1.3rem; width: 68px; height: 68px; }
+  .soon-star { width: 70px; height: 70px; }
+}
+
+/* The burst no longer carries its own wording: at the size the short tile
+   allows it was too small to read, and the footer already says "in
+   development" in white on the flooded tile. The mark stamps, the footer
+   states. */
+.tile-soon .soon-text { display: none; }
+
+/* ============================================================
+   81. TAGS SIT WITH THE WORDS THEY DESCRIBE
+   Under the paragraph, not under the drawing, so a tile reads
+   top to bottom in one column instead of two.
+   ============================================================ */
+
+.tile-copy .tile-tags {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0.2rem 0 0;
+  gap: 0.4rem;
+  opacity: 1;
+  transform: none;
+}
+.tile-copy .ttag { min-width: 0; padding: 0.3rem 0.55rem; }
+.tile-copy .ttag span { font-size: 0.5rem; }
+
+.tile-foot { padding-top: 0.8rem; }
+
+/* ============================================================
+   82. WHO A TOOL IS FOR
+   Stated in its own outlined box, in the tool's colour, so it
+   reads as a claim about the reader rather than a footnote.
+   ============================================================ */
+
+.audience {
+  display: block;
+  /* 62ch is the paragraph's measure, but a ch is the width of one character
+     at the element's own size, so a smaller font gave a shorter box. Taking
+     the paragraph's font size makes the two measures identical, and
+     border-box keeps the padding inside it rather than adding to it. */
+  max-width: 62ch;     /* resolved against the inherited font, as the paragraph is */
+  box-sizing: border-box;
+  margin: 1.1rem 0 0;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--tool-hue, var(--accent));
+  color: var(--tool-hue, var(--accent));
+  line-height: 1.45;
+}
+
+/* ============================================================
+   83. THREE LOOKS, IN ONE LINE
+   On a tool page the "light" block takes that tool's colour
+   instead of the gold it wears on the About page.
+   ============================================================ */
+
+.looks-line { margin-top: 1.4rem; max-width: 62ch; }
+.tool-page .looks-line .m-light { background: var(--tool-hue); color: #FFFFFF; }
+
+/* ============================================================
+   84. A VERSION: BUY IT AND SEE IT ON THE LEFT, READ IT ON THE RIGHT
+   ============================================================ */
+
+.version { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(1.6rem, 4vw, 3rem); align-items: start; }
+.version-info .version-shots { margin-top: 1.5rem; }
+.version-specs h3 { margin-top: 0; }
+
+@media (max-width: 820px) { .version { grid-template-columns: minmax(0, 1fr); } }
+
+/* ============================================================
+   85. THE FILTER ROW KEEPS THE PAGE'S OWN GROUND
+   A white band under it read as a bar bolted to the page.
+   ============================================================ */
+
+.filters-stick { background: transparent; border-bottom: 0; backdrop-filter: blur(6px); }
+
+/* ============================================================
+   86. TEMPLATE PAGES: TWO COLUMNS UNDER ONE HEADING
+   The main account on the left, the lists that support it on the
+   right, both starting at the same line under the heading.
+   ============================================================ */
+
+.split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(1.8rem, 4.5vw, 3.4rem); align-items: start; margin-top: 1.1rem; }
+.split-side h3:first-child { margin-top: 0; }
+.split-side .ticks { margin-bottom: 0; }
+
+@media (max-width: 820px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+/* A gallery of screenshots, as many across as will fit. */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 0.9rem; }
+.gallery .frame { min-height: 150px; display: grid; place-items: center; }
+
+
+/* Gallery cells share one shape, so a real screenshot and an empty slot
+   sit on the same line instead of stepping down the column. */
+.gallery .shot-frame img { aspect-ratio: 16 / 10; object-fit: cover; }
+.gallery .frame { aspect-ratio: 16 / 10; min-height: 0; }
+.gallery { grid-auto-rows: 1fr; }
+.gallery .shot-frame { display: block; }
+.gallery .shot-frame img { height: 100%; width: 100%; }
+
+/* ============================================================
+   87. GET IT AND SPECS ARE THE SAME RANK
+   One was sized down and the other was not, so a section looked
+   like it had a heading and a sub-heading when it has two peers.
+   ============================================================ */
+
+.version-info h3,
+.version-specs h3,
+.chunk > h3 { margin: 1.6rem 0 0.7rem; font-size: 1rem; }
+
+.chunk > h3 + .btn-row { margin-bottom: 1.8rem; }
+.version-specs h3 { margin-top: 0; }
+
+/* The two columns start level with each other. */
+.version { align-items: start; }
+
+/* ============================================================
+   88. A TEMPLATE'S HEADER PICTURE
+   The tool pages put a tall plug-in shot here. A session
+   screenshot is wide, so it takes the full column at its own
+   proportion rather than rattling around in a portrait frame.
+   ============================================================ */
+
+.tool-shot .shot-frame { width: 100%; }
+.tool-shot .shot-frame img { width: 100%; height: auto; display: block; }
+
+/* ============================================================
+   89. THE BREATH EITHER SIDE OF THE TOOL SHELF
+   The drop from the opening to the shelf was much larger than
+   the drop from the shelf to the photograph, which made the page
+   feel like it lost its footing between the two. Both are now
+   set from one number, so they read as the same pause.
+   ============================================================ */
+
+/* The opening stops a little short of the fold now, which takes the slack
+   out from under the drawing without letting the next section crowd in. */
+:root { --shelf-gap: 6.56rem; }
+
+.band-hero { padding-bottom: 1.1rem; }
+
+/* Above and below the shelf, set from one number so they stay equal. */
+#tools { padding-bottom: var(--shelf-gap); }
+.band-photo { padding-top: var(--shelf-gap); }
+
+/* ============================================================
+   90. THE SAME 210px EITHER SIDE OF "OUR VALUES"
+   The opening block is the same height on every page, but the
+   About drawing is shorter than the one on the home page, so
+   more empty room was left under it and the drop to the first
+   heading read longer. The About opening is trimmed by that
+   difference, and the space under the value boxes is set to
+   match the gap above them.
+   ============================================================ */
+
+/* The opening keeps the height it has on every other page — shortening it
+   pulled "our values" up above the fold. The 20px comes off the band's own
+   top padding instead, which moves the heading without moving the opening. */
+/* About's drawing is shorter than the home page's, so with the shared trim
+   its opening ended early and the 210px gap put "our values" above the fold.
+   This page keeps the full window height instead, which carries the heading
+   past the fold without changing the gap. */
+.page-about .band-hero { min-height: calc(100vh - var(--header-h)); }
+.page-about .band-values { padding-top: 0; margin-top: -23px; }
+
+/* Below the boxes, split so the total matches the gap above them. The
+   heading under it carries its own margin, which is why this is not simply
+   half of 210. */
+.band-values { padding-bottom: 5.75rem; }
+.band-after-values { padding-top: 5.75rem; }
+
+/* ============================================================
+   91. THE ABOUT TITLE STARTS WHERE THE OTHERS DO
+   Every opening ends at the same depth, but About's words take
+   313px against Templates' 454, and a centred column puts a short
+   block of text low. The words start at the top of the opening
+   here; the drawing stays centred, so the block still ends where
+   it did and "our values" stays below the fold.
+   ============================================================ */
+
+.page-about .band-hero .hero-text { align-self: start; }
+
+/* Placed rather than centred. Centring kept giving back half of any nudge,
+   because moving the block changed the space it was being centred in; this
+   sets the distance from the header outright, so the title lands on exactly
+   the same line as the one on Templates. */
+.page-about .band-hero { justify-content: flex-start; padding-top: 170px; }
+
+/* ============================================================
+   92. THE WAY BACK, TOP RIGHT
+   A template page is somewhere you arrive from the shelf, so the
+   way back sits where the eye finishes rather than where it
+   starts. Sized to its own words, so only the words are clickable.
+   ============================================================ */
+
+.back-right {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-bottom: 0.6rem;
+}
+
+/* On a tool page the release badge overhangs the top of the plug-in shot and
+   lands exactly where this link sits, so the header starts lower to let both
+   have their own line. */
+.tool-page .back-right { margin-bottom: 3.5rem; }
+
+/* ============================================================
+   93. A LOOK INSIDE: SCREENSHOTS LEFT, WALKTHROUGH RIGHT
+   The screenshots were sharing the full width with nothing to
+   push against, which made them small, and the film sat under
+   them where it read as an afterthought. The pictures now take
+   two thirds in larger cells, and the film holds the other third.
+   ============================================================ */
+
+.inside {
+  display: grid;
+  /* Equal halves. The screenshot gives up some width so the film can match it
+     exactly, rather than the gap between them being squeezed. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 3.5vw, 2.6rem);
+  align-items: start;
+  margin-top: 1.1rem;
+}
+
+/* Both boxes are 16:9, so they are the same size in both directions. A film is
+   16:9 whatever happens to it; making the screenshot match avoids the player
+   sitting letterboxed inside a taller box. */
+.inside .shotbox-stage { aspect-ratio: 16 / 9; }
+.inside-film .video { margin-top: 0; }
+
+/* One screenshot to a row here. A session grab is dense, and at half this
+   width the track names stop being readable, which defeats the point. */
+.inside .gallery { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+
+.film-note {
+  margin: 0.7rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+}
+
+@media (max-width: 820px) {
+  .inside { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   94. BEFORE AND AFTER
+   Three degrees of damage, each with the clipped take and the
+   restored one. The browser's own audio controls are rounded and
+   look different in every browser, so the player is drawn here
+   instead: a square button, a straight line, nothing round.
+   ============================================================ */
+
+.ab { display: grid; gap: 1.8rem; margin-top: 0.4rem; }
+
+.ab-set h3 {
+  margin: 0 0 0.7rem;
+  font-size: 0.95rem;
+}
+
+.clip {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem 0;
+  border-top: var(--rule);
+}
+.ab-set .clip:last-child { border-bottom: var(--rule); }
+
+.clip-play {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--tool-hue, var(--accent));
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+.clip-play:hover { background: var(--tool-hue, var(--accent)); }
+.clip-play svg { width: 16px; height: 16px; display: block; }
+.clip-play .ic-play { fill: var(--tool-hue, var(--accent)); stroke: none; transition: fill 0.18s; }
+.clip-play .ic-pause { display: none; stroke: var(--tool-hue, var(--accent)); stroke-width: 2; fill: none; transition: stroke 0.18s; }
+.clip-play:hover .ic-play { fill: #FFFFFF; }
+.clip-play:hover .ic-pause { stroke: #FFFFFF; }
+
+.clip.is-playing .ic-play { display: none; }
+.clip.is-playing .ic-pause { display: block; }
+
+.clip-name {
+  flex: 0 0 5.5rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--moss-deep);
+}
+
+.clip-bar {
+  flex: 1 1 auto;
+  position: relative;
+  height: 14px;
+  cursor: pointer;
+}
+/* The line itself is thin; the box around it is tall enough to click. */
+.clip-bar::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: var(--rule-colour, #D3D8CC);
+}
+.clip-fill {
+  position: absolute;
+  left: 0; top: 50%;
+  height: 3px;
+  margin-top: -1px;
+  width: 0;
+  background: var(--tool-hue, var(--accent));
+}
+
+.clip-time {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+
+.clip.is-loading .clip-time::after { content: " …"; }
+
+@media (max-width: 560px) {
+  .clip-name { flex-basis: 4.4rem; }
+}
+
+/* ============================================================
+   95. THE SCREENSHOT GALLERY
+   One picture at a time in a fixed box, so a template can carry
+   ten screenshots without the page growing by ten screenshots.
+   Square buttons and a counted position, nothing round.
+   ============================================================ */
+
+.shotbox { outline: none; }
+.shotbox:focus-visible .shotbox-stage { outline: 2px solid var(--tool-hue, var(--accent)); outline-offset: 4px; }
+
+.shotbox-stage {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+.shot-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease;
+}
+.shot-slide.is-current { opacity: 1; visibility: visible; }
+
+/* A marked slot keeps the dashed outline it has elsewhere. */
+.shotbox-stage .frame { display: grid; place-items: center; min-height: 0; }
+
+.shotbox-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.shotbox-arrow {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--tool-hue, var(--accent));
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.shotbox-arrow svg { width: 14px; height: 14px; }
+.shotbox-arrow path {
+  fill: none;
+  stroke: var(--tool-hue, var(--accent));
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.18s;
+}
+.shotbox-arrow:hover { background: var(--tool-hue, var(--accent)); }
+.shotbox-arrow:hover path { stroke: #FFFFFF; }
+
+.shotbox-count {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+.shotbox-count b { font-weight: 400; color: var(--tool-hue, var(--accent)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-slide { transition: none; }
+}
+
+/* When a template states no requirements of its own, the specs take the
+   whole width rather than leaving an empty column beside them. */
+.version-solo { grid-template-columns: minmax(0, 1fr); }
+
+/* The price beside a product's name, where a version's price sits on a tool
+   page. It keeps its own size rather than inheriting the headline's. */
+.tool-title .price-chip { vertical-align: middle; margin-left: 0.8rem; }
+
+/* ============================================================
+   96. THE NEWSLETTER BOX IS A PLAIN RECTANGLE
+   It was a drawn quadrilateral with each corner a few pixels
+   out, which read as sketched beside the hand-drawn hero. With
+   the rest of the page squared up it just looked crooked. A real
+   border outlines it now, in the blue of the bar above.
+   ============================================================ */
+
+.scroll-note {
+  background: #F3EDDC;
+  /* The drawn box it replaced was an SVG stretched with
+     preserveAspectRatio="none", so its 1.8 stroke rendered at 2.4px down the
+     sides and 1.9px across the top. A 1px border was less than half that, and
+     a dark navy that thin reads as black. 2px carries the colour. */
+  border: 2px solid #2B5474;
+}
+
+/* ============================================================
+   97. TYPE, BACK INSIDE THE GUIDELINES
+   Three faults, all of them weights the brand does not have:
+
+   H2 had no rule of its own, so it fell through to the browser's
+   default bold. That is 700 — the guideline says Fredoka 600,
+   and 700 was never downloaded, so every section heading on the
+   site was a browser-smeared fake bold of a weight we do not own.
+
+   Several mono labels asked for 600 or 700. DM Mono has no such
+   weights: it ships 300, 400 and 500 only, so those were faked
+   too. They sit at 500, the heaviest it actually has.
+   ============================================================ */
+
+h2 {
+  font-family: var(--head);
+  font-weight: 600;
+}
+
+.price-chip,
+.role-link,
+.collab a,
+.filter[aria-pressed="true"] { font-weight: 500; }
+
+/* Bold text had the same gap h2 did: no rule, so the browser's 700. The
+   brand's bold is 600, which matches the em rule already here. */
+strong, b { font-weight: 600; }
+
+/* ============================================================
+   98. A COMPOSED PRODUCT STILL
+   The plug-in shot is two panels arranged with their own drop
+   shadow on a transparent surround. A drawn frame and the gold
+   block behind it would fight that, so it sits on the page.
+   ============================================================ */
+
+.version-still {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 520px;
+}
+
+/* ============================================================
+   99. THE BADGE MOVES TO THE CORNER THE ARROW USES
+   It had been stamped over the drawing, which buried the one
+   picture the tile has. It now sits at the bottom right, in the
+   spot a released tile gives its "open" arrow, and carries its
+   own words again — at that size they can be read.
+   ============================================================ */
+
+.tile-soon .soon {
+  inset: auto 1.1rem 0.9rem auto;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+}
+.soon-star { width: 80px; height: 80px; }
+
+/* The burst keeps its tilt, the words do not — at this size a rotated label
+   is a puzzle rather than a flourish. */
+.tile-soon .soon-text {
+  display: block;
+  font-size: 0.5rem;
+  line-height: 1.3;
+  transform: scale(0.8);
+}
+.tile-soon:hover .soon-text { transform: scale(1); }
+
+@media (max-width: 560px) {
+  .tile-soon .soon { inset: auto 0.9rem 0.8rem auto; width: 66px; height: 66px; }
+  .soon-star { width: 66px; height: 66px; }
+}
+
+/* The price beside a template's name carries the weight of a price rather
+   than a footnote: it is the number somebody is deciding on. */
+.tool-title .price-chip {
+  font-size: 1rem;
+  padding: 0.28rem 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================
+   100. A VERSION'S PRICE SITS UNDER ITS BUTTON
+   The button names the version. What that version costs goes on
+   its own line beneath it, in the label mono, so the button is
+   not carrying a name and a price at once. The stack is what
+   flexes now, not the button inside it.
+   ============================================================ */
+
+.versions .version-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.34rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.versions .version-pick .btn {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.version-pick-note {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--grey);
+  text-align: center;
+}
+
+/* ============================================================
+   101. A FRAMED SHOT ENDS WHERE THE SPECS END
+   The screenshot column and the specs column are siblings in the
+   same grid row, so the picture is told to take the row's full
+   height rather than its own. The specs run to different lengths
+   on different widths, so a fixed aspect ratio could never line
+   up everywhere; the image is cropped to roughly the right shape
+   and covers the rest, which trims a few pixels instead of
+   leaving a ragged edge. A cut-out still has no frame and keeps
+   its own proportions.
+   ============================================================ */
+
+@media (min-width: 1000px) {
+  /* min-height: 0 is the load-bearing line. Without it the picture's own
+     height is still its minimum, so instead of following the row it makes
+     the row taller and overshoots the specs by a few pixels. */
+  .version-shots.shot-fill { align-self: stretch; grid-auto-rows: 1fr; min-height: 0; }
+
+  .version-shots.shot-fill .shot-frame {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Taken out of flow so the picture contributes no height of its own.
+     Left in flow it reports its natural height as the row's minimum, makes
+     the row taller than the specs, and overshoots them by those few pixels. */
+  .version-shots.shot-fill .shot-frame img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* Below that the two columns are too narrow for this to help: stretching a
+   wide screenshot into a tall slot would crop it to a strip of its middle.
+   It keeps its own proportions there. */
+
+/* ============================================================
+   102. A WALKTHROUGH SERVED FROM THE SITE
+   Where a template has its own film it plays from elfboi rather
+   than from an embed, so there is no third-party player and no
+   YouTube cookie on a page someone is buying from. It sits in
+   the same 16:9 box the embed used, so nothing around it moves.
+   ============================================================ */
+
+.video-film { overflow: hidden; }
+
+.film-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--ink);
+}
+
+/* ============================================================
+   103. A TEMPLATE WITH ITS OWN FILM GIVES IT THE WHOLE WIDTH
+   Where there is a real walkthrough it carries the section on
+   its own: the stills beside it were showing the same session
+   the film already walks through, at half the size. Templates
+   with no film keep the stills and the two-column layout.
+   ============================================================ */
+
+.inside-solo { grid-template-columns: minmax(0, 1fr); }
+.inside-solo .video { max-width: none; }
+/* No measure cap here. The caption is one short line of mono; capping it at
+   60ch broke a 79-character sentence after "Full video" and left three words
+   stranded underneath. It runs the width of the film instead. */
+.inside-solo .film-note {
+  max-width: none;
+  /* Only a phone is narrow enough to force a second line. Balancing it puts
+     the break on the full stop — "...of the session." / "Full video comes
+     with the template." — instead of after "Full video". Browsers without
+     it just wrap normally. */
+  text-wrap: balance;
+}
+
+/* ============================================================
+   104. A COMPOSED HEADER PICTURE
+   Where a template hands the header several screenshots stacked
+   into one, the picture is already its own object: it carries
+   its own edges and shadows and sits on the page background
+   rather than inside a frame. A single screenshot still gets
+   the frame, which is what makes one lonely picture read as
+   deliberate; this one does not need it, and it is given the
+   width a single shot would look stranded in.
+   ============================================================ */
+
+/* The composed picture earns a slightly wider column than a single framed
+   screenshot does. Bounded above 780px so it cannot outrank the phone rule
+   in section 105, which is a plain .tool-hero and would lose to this. */
+@media (min-width: 781px) {
+  .tool-hero:has(.tool-shot-still) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr); }
+}
+
+.tool-shot-still { display: flex; align-items: center; justify-content: flex-end; }
+
+.tool-still {
+  display: block;
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  margin-left: auto;
+  flex: 0 1 auto;
+}
+
+/* ============================================================
+   105. THE PRODUCT HEADER STACKS ON A PHONE
+   There was a rule for this at section 41, but section 62 set
+   the columns again later with no media query, so it won it
+   back at every width. On a 390px phone that left the title in
+   a 172px column — the 5.1 template's name broke over five
+   lines — with the picture squeezed beside it. Restated here,
+   after both, so it actually applies: below 780px the header is
+   one column and each part gets the full width.
+   ============================================================ */
+
+@media (max-width: 780px) {
+  .tool-hero { grid-template-columns: minmax(0, 1fr); }
+  .tool-shot .shot-frame { max-width: none; margin-left: 0; }
+  .tool-shot-still { justify-content: center; }
+  .tool-still { max-width: 560px; margin-inline: auto; }
+}
+
+/* ============================================================
+   106. A COURSE THAT IS NOT FINISHED YET
+   The row is not a link, but it still answers the pointer: the
+   same colour wipe a linked row has, and the state fading up in
+   the middle of the row while the pointer is on it. At rest the
+   list stays clean — the note beside the heading already says
+   they are all coming — and because the words are only faded
+   out rather than removed, a screen reader still reads them.
+   The label is a direct child of the row, not of the title, so
+   it centres against the row; nested, it would centre against
+   the title, which .row-hue > * makes a positioning context.
+   ============================================================ */
+
+.row-soon { cursor: default; }
+
+.row-soon:hover::after { opacity: 1; }
+.row-soon:hover .row-title,
+.row-soon:hover .row-index { color: var(--row-hue); }
+.row-soon:hover .row-meta { color: #FFFFFF; }
+
+.row-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* The wipe covers the right 42%, so the centre is still on paper and the
+     row's own colour reads against it. */
+  transform: translate(-50%, -50%) scale(0.94);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  color: var(--row-hue, var(--grey));
+  opacity: 0;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  pointer-events: none;
+}
+
+.row-soon:hover .row-status { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+@media (max-width: 620px) {
+  /* No pointer to hover with, and the row stacks, so it sits in the flow
+     under the title and simply stays visible. */
+  .row-status {
+    position: static;
+    transform: none;
+    opacity: 1;
+    margin-top: 0.2rem;
+  }
+}
+
+/* ============================================================
+   107. A NOTE BESIDE A SECTION HEADING
+   The heading keeps its size and the note sits out to the right
+   on its baseline, so the two read as one line rather than the
+   note looking like a stray first row of the list. The heading's
+   own bottom margin moves up to the pair, or the note would
+   hang closer to the list than to the heading it belongs to.
+   Below 700px they stack, the note under the heading.
+   ============================================================ */
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem 1.6rem;
+  margin-bottom: 1.8rem;
+}
+
+.section-head .section-label { margin-bottom: 0; }
+
+.section-note {
+  margin: 0;
+  max-width: 44ch;
+  text-align: right;
+  font-size: var(--step--1);
+  color: var(--grey);
+}
+
+.section-note a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
+.section-note a:hover { color: var(--ink); }
+
+@media (max-width: 700px) {
+  .section-head { display: block; }
+  .section-head .section-label { margin-bottom: 0.5rem; }
+  .section-note { text-align: left; max-width: none; }
+}
+
+/* ============================================================
+   108. A TEMPLATE THAT IS NOT ON SALE YET
+   The tile keeps its hover colour, the same as an unreleased
+   tool tile does, so hovering still gives an answer. What it no
+   longer does is slide the word sideways: that nudge is the
+   arrow's gesture and it reads as a promise to go somewhere.
+   The word itself replaces the arrow rather than joining it, so
+   the tile says its state once.
+   ============================================================ */
+
+/* The arrow slot is left empty on these, as it is on an unreleased tool
+   tile, so there is nothing in it to nudge sideways on hover. */
+.tile-soon .tile-go { transform: none; }
