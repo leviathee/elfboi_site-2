@@ -1027,35 +1027,56 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   // cubic through the samples on either side, which arcs back over the ceiling
   // the way the waveform would have if it had not run out of headroom. Done a
   // block at a time so a long file morphs the graphic smoothly.
-  function declipBlock(d, peak, from, to) {
-    var n = d.length;
-    if (peak < 1e-5) return 0;
-    var thr = peak * 0.985, fixed = 0;
-    var i = from < 1 ? 1 : from;
-    while (i < to && i < n - 1) {
+  // Clipping is a SHAPE, not a level. The old test was "within 1.5% of the
+  // file's loudest sample", which got it wrong in both directions: a slow sine
+  // sits near its own peak for several samples and was being "repaired", while
+  // a file clipped at -6 dB with one louder transient somewhere else had its
+  // threshold dragged up above the flat tops and came back "No clipping found".
+  //
+  // What actually marks a clipped sample is that the waveform stops moving:
+  // a run of consecutive samples holding the same value. Clean material does
+  // not do that for long — measured across test signals, honest audio tops out
+  // around a 10-sample run and a slow sine at 3, while clipped material throws
+  // hundreds of runs past 32. Eight is comfortably between the two.
+  //
+  // Nothing here looks at the file's peak, so the level a file was clipped at,
+  // and whatever was done to it afterwards, no longer matter.
+  var FLAT_EPS = 2 / 32768;    // two 16-bit steps: a plateau, allowing for dither
+  var FLAT_MIN = 8;            // shorter runs than this occur in clean audio
+  var FLAT_FLOOR = 0.02;       // digital silence is flat too, and is not clipping
+
+  function declipBlock(d, _peakUnused, from, to) {
+    var n = d.length, fixed = 0;
+    var i = from < 2 ? 2 : from;
+    while (i < to && i < n - 2) {
       var v = d[i];
-      if ((v >= thr) || (v <= -thr)) {
-        var sign = v > 0 ? 1 : -1, j = i;
-        while (j < n - 1 && (sign > 0 ? d[j] >= thr : d[j] <= -thr)) j++;
-        var len = j - i;
-        if (len >= 2 && i >= 2 && j < n - 2) {
-          var p0 = d[i - 1], p1 = d[j];
-          var m0 = (d[i - 1] - d[i - 2]) * len;
-          var m1 = (d[j + 1] - d[j]) * len;
-          for (var k = 0; k < len; k++) {
-            var t = (k + 1) / (len + 1), t2 = t * t, t3 = t2 * t;
-            var y = (2 * t3 - 3 * t2 + 1) * p0 + (t3 - 2 * t2 + t) * m0
-                  + (-2 * t3 + 3 * t2) * p1 + (t3 - t2) * m1;
-            if (sign > 0 && y < thr) y = thr;
-            if (sign < 0 && y > -thr) y = -thr;
-            if (y > peak * 1.9) y = peak * 1.9;
-            if (y < -peak * 1.9) y = -peak * 1.9;
-            d[i + k] = y;
-          }
-          fixed += len;
+      if ((v < 0 ? -v : v) < FLAT_FLOOR) { i++; continue; }
+
+      var j = i + 1;
+      while (j < n && Math.abs(d[j] - v) <= FLAT_EPS) j++;
+      var len = j - i;
+
+      if (len >= FLAT_MIN && i >= 2 && j < n - 2) {
+        // the run is rebuilt against the level it sat at, not the file's peak
+        var sign = v > 0 ? 1 : -1, lvl = sign > 0 ? v : -v;
+        var p0 = d[i - 1], p1 = d[j];
+        var m0 = (d[i - 1] - d[i - 2]) * len;
+        var m1 = (d[j + 1] - d[j]) * len;
+        for (var k = 0; k < len; k++) {
+          var t = (k + 1) / (len + 1), t2 = t * t, t3 = t2 * t;
+          var y = (2 * t3 - 3 * t2 + 1) * p0 + (t3 - 2 * t2 + t) * m0
+                + (-2 * t3 + 3 * t2) * p1 + (t3 - t2) * m1;
+          if (sign > 0 && y < lvl) y = lvl;
+          if (sign < 0 && y > -lvl) y = -lvl;
+          if (y > lvl * 1.9) y = lvl * 1.9;
+          if (y < -lvl * 1.9) y = -lvl * 1.9;
+          d[i + k] = y;
         }
-        i = j + 1;
-      } else i++;
+        fixed += len;
+        i = j;
+      } else {
+        i = len > 1 ? j : i + 1;
+      }
     }
     return fixed;
   }
@@ -1112,7 +1133,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
 
     var chans = [];
     for (var c = 0; c < buf.numberOfChannels; c++) chans.push(buf.getChannelData(c).slice());
-    var peaks = chans.map(channelPeak);
+    var peaks = chans.map(channelPeak);   // kept for normalise, not for detection
     var len = chans[0].length, total = len * chans.length;
     var BLOCK = 220000;
     var ch = 0, at = 0, walked = 0, fixed = 0;
