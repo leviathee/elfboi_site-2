@@ -26,7 +26,7 @@ streaming media element rather than decoding long WAVs into memory. Removing a
 bank row removes its local reference only. Cookie loss can prevent recovery.
 
 The backend is https://github.com/a-n-t-h-o-n-y/declip-backend-2.
-See its [integration and cutover guide](https://github.com/a-n-t-h-o-n-y/declip-backend-2/blob/elfboi-backend-integration/docs/elfboi-integration.md)
+See its [integration and cutover guide](https://github.com/a-n-t-h-o-n-y/declip-backend-2/blob/main/docs/elfboi-integration.md)
 for the paired branch and production verification still required. The main
 configuration steps are:
 
@@ -57,9 +57,46 @@ not implement `/api/declip`; live processing needs the configured Vercel route
 and backend. The tests use in-memory API fixtures to cover upload, asynchronous
 inspection, queues, refresh, uncertain responses, retries and expiring grants.
 
-The canvas remains a decorative progress animation. Browser progress reflects
-upload bytes or restoration chunks; waiting and saving are indeterminate.
-Minimal recovery controls use the existing styling and appear only when needed.
+The canvas remains a decorative progress animation. The overall bar is a
+presentation estimate, not an exact elapsed-time percentage. Minimal recovery
+controls use the existing styling and appear only when needed.
+
+### Overall progress timing
+
+`src/clipped-progress.mjs` continuously adjusts movement speed from estimated
+remaining work instead of assigning fixed percentages to backend stages. A stage
+or polling update never changes the displayed position directly. Audio duration
+comes from bounded browser metadata first, then verified server duration. Observed
+upload and chunk throughput replace initial estimates when samples are available.
+No extra API calls or backend changes are required.
+
+The defaults reflect saved shared-worker production measurements: a 12-second
+clip spent 20.38 seconds in inspection including startup, then 1.42 seconds in
+inference; a three-minute clip spent 27.28 seconds and 6.20 seconds respectively.
+The two-hour concurrent-preparation benchmark recorded 58.64 seconds preparing
+and 237.79 seconds in inference. These are calibration examples, not guarantees.
+Initial estimates allow 25 seconds plus duration/120 for preparation, 1 plus
+duration/30 for inference, and 1 plus duration/60 for output saving. Queue position
+only reveals a count, not other recordings' lengths; its uncertainty grows with
+time spent waiting rather than counting down to a fictitious deadline.
+
+Replaying the saved cold-run wall times with representative one-second progress
+polls gives the following bar positions when inspection finishes:
+
+| Recording | Previous bar | Current bar |
+|---|---:|---:|
+| 12 seconds | 25% | 70% |
+| Three minutes | 26% | 81% |
+
+These are presentation simulations using recorded timings, not new production
+latency measurements. Tests also cover a 90-second queue, slow uploads, longer
+inference, errors/retries, frame rates and hidden tabs. The bar keeps moving
+through unknown work, slows down if estimates are exceeded, and remains below
+100% until confirmed completion. Exception states freeze the estimate. Completion
+fills the remaining distance over 600 ms without delaying the download. Very fast
+warm runs can finish before the cold-start estimate catches up; long unpredictable
+waits can still approach the end of the bar. Neither case invents a completion
+signal or holds a ready result.
 
 ## Other integrations
 

@@ -73,7 +73,7 @@ export class DeclipClient {
     this.running = false; this.file = null; this.job = null; this.session = null;
   }
   persist() { save(this.storage, ACTIVE_KEY, this.active); }
-  emit(view) { this.onChange({ busy: !!this.active, canRetry: false, canDiscard: false, needsFile: false, ...view }); }
+  emit(view) { this.onChange({ durationSeconds: this.active?.request?.duration_seconds, busy: !!this.active, canRetry: false, canDiscard: false, needsFile: false, ...view }); }
   async api(path, body) {
     const method = body === undefined ? 'GET' : 'POST';
     let response;
