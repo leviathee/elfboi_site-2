@@ -161,6 +161,6 @@ requests cancellation of the same remote job. A lost response preserves the
 cancellation request across refresh; Retry continues cancellation rather than
 starting new work. If completion committed first, its download is preserved.
 
-Requires the paired backend cancellation update (Worker and Modal) before this
-website change is merged. The proxy adds only `/api/declip/jobs/:id/cancel`; the
+The paired backend cancellation update (Worker and Modal) was deployed and
+verified with real audio on October 20, 2026. The proxy adds only `/api/declip/jobs/:id/cancel`; the
 signed internal cancellation check stays private to the backend.
