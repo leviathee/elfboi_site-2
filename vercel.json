@@ -2,5 +2,31 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "python3 build.py",
   "outputDirectory": ".",
-  "installCommand": "echo no dependencies"
+  "installCommand": "echo no dependencies",
+  "routes": [
+    {
+      "src": "^/api/declip/(health|session|jobs(?:/[a-f0-9-]{36}(?:/(?:inspect|start|abandon|download-url))?)?)$",
+      "dest": "https://declip-web.anthonym-leedom.workers.dev/api/$1",
+      "headers": {
+        "Cache-Control": "private, no-store"
+      },
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "x-declip-proxy-secret"
+          },
+          "args": "$DECLIP_PROXY_SECRET",
+          "env": [
+            "DECLIP_PROXY_SECRET"
+          ]
+        }
+      ]
+    },
+    {
+      "src": "^/api/declip(?:/.*)?$",
+      "status": 404
+    }
+  ]
 }
