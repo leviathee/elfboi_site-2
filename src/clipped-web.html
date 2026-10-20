@@ -261,6 +261,11 @@
   .row { display: flex; align-items: center; justify-content: space-between; gap: 14px;
          font-size: 13px; letter-spacing: 0.02em; }
   .row #pct, .row #left { font-family: var(--mono); font-weight: 400; letter-spacing: 0.05em; }
+  .render-actions { display: inline-flex; align-items: center; gap: 14px; }
+  #cancel { background: none; border: 0; padding: 4px 0; color: var(--quiet);
+            font: inherit; font-size: 12px; cursor: pointer; }
+  #cancel:hover, #cancel:focus-visible { color: var(--paper); text-decoration: underline; }
+  #cancel:disabled { cursor: default; opacity: 0.6; }
   .rail-line { height: 3px; background: #3D3936; margin-top: 11px; }
   [hidden] { display: none !important; }
   .rail-line .fill { height: 3px; width: 0%; background: var(--gold); transition: width 120ms linear; }
@@ -417,7 +422,7 @@
 
         <div class="card">
           <h2>Render</h2>
-          <div class="row"><span id="status">Waiting for a file</span><span id="pct">0%</span></div>
+          <div class="row"><span id="status">Waiting for a file</span><span class="render-actions"><button id="cancel" type="button" hidden>Cancel</button><span id="pct">0%</span></span></div>
           <div class="rail-line"><div class="fill" id="pfill"></div></div>
           <div id="verification"></div>
           <div class="row">
@@ -868,12 +873,15 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     pfill.parentElement.setAttribute('aria-valuenow', String(percent));
     if (progress.animating) progressFrame = requestAnimationFrame(paintProgress);
   }
+  var cancelBtn = document.getElementById('cancel');
   function renderState(view) {
     busy = view.busy && !view.needsFile;
     fileIn.disabled = busy;
     scope.setAttribute('aria-disabled', String(busy));
     retryBtn.hidden = !view.canRetry;
     discardBtn.hidden = !view.canDiscard;
+    cancelBtn.hidden = !view.canCancel;
+    cancelBtn.disabled = !!view.cancelling;
     progress.update(view);
     say(progress.text, view.error);
     pfill.parentElement.setAttribute('aria-valuetext', progress.text);
@@ -909,13 +917,17 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     }).catch(function (error) { widgetPromise = null; throw error; });
     return widgetPromise;
   }
-  async function getToken() {
+  async function getToken(signal) {
     await prepareVerification(client.session);
+    signal.throwIfAborted();
     if (!challengeToken) {
       await new Promise(function (resolve, reject) {
-        var timer = setTimeout(function () { tokenWaiter.reject(new Error('Verification timed out. Please retry.')); }, 180000);
-        tokenWaiter = { resolve: function (token) { clearTimeout(timer); tokenWaiter = null; resolve(token); },
-          reject: function (error) { clearTimeout(timer); tokenWaiter = null; reject(error); } };
+        function cleanup() { clearTimeout(timer); signal.removeEventListener('abort', abort); tokenWaiter = null; }
+        function abort() { cleanup(); reject(new DOMException('Cancelled', 'AbortError')); }
+        var timer = setTimeout(function () { cleanup(); reject(new Error('Verification timed out. Please retry.')); }, 180000);
+        tokenWaiter = { resolve: function (token) { cleanup(); resolve(token); },
+          reject: function (error) { cleanup(); reject(error); } };
+        signal.addEventListener('abort', abort, { once: true });
         window.turnstile.reset(widget);
       });
     }
@@ -930,6 +942,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
       saveBank(bank); lastRow = row; paintBank(); flare();
     }
   });
+  cancelBtn.onclick = function () { client.cancel(); };
   retryBtn.onclick = function () { client.retry(); };
   discardBtn.onclick = function () { client.abandon(); };
 
