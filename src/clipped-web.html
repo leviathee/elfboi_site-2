@@ -867,7 +867,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     pctEl.textContent = percent + '%';
     pfill.style.width = (value * 100) + '%';
     pfill.parentElement.setAttribute('aria-valuenow', String(percent));
-    if (progress.active) progressFrame = requestAnimationFrame(paintProgress);
+    if (progress.animating) progressFrame = requestAnimationFrame(paintProgress);
   }
   function renderState(view) {
     busy = view.busy && !view.needsFile;
