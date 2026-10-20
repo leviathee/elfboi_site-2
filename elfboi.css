@@ -3457,3 +3457,24 @@ strong, b { font-weight: 600; }
 /* The arrow slot is left empty on these, as it is on an unreleased tool
    tile, so there is nothing in it to nudge sideways on hover. */
 .tile-soon .tile-go { transform: none; }
+
+/* ============================================================
+   109. A COMING-SOON BUTTON DOES NOT ANSWER THE POINTER
+   .btn-off also carries .btn, so it was inheriting the gold
+   hover fill and the transition that eases into it — which
+   reads as "this does something" on a thing that deliberately
+   does nothing. It now holds its dashed, quiet state under the
+   pointer and under keyboard focus.
+   ============================================================ */
+
+.btn-off,
+.btn-off:hover,
+.btn-off:focus,
+.btn-off:focus-visible {
+  background: transparent;
+  border-color: var(--moss-pale);
+  color: var(--grey);
+  transition: none;
+  transform: none;
+  cursor: default;
+}
