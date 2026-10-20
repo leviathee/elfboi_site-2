@@ -648,21 +648,16 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
 
   var GLOWNOW = '#ffffff';
 
-  // The field is painted twice: once flat into an offscreen canvas, which is
-  // then blurred and laid underneath as atmosphere, and once crisp on top. A
-  // clipped surface gets a wide red haze; a restored one a tight white one.
-  // Two downsampled buffers do the blurring: painting the field small and
-  // scaling it back up is a real blur that works everywhere, with no reliance
-  // on canvas filters. The smaller buffer is the wide haze, the larger one the
-  // tight glow close to the surface.
-  // The glow is a soft radial sprite stamped once per point and added together.
-  // Nothing is ever scaled up, so there is no resolution to lose and the haze
-  // stays smooth however wide it gets.
-  var SPRITE = 128, spriteCache = {};
+  // A single radial glow sprite is reused as its colour changes. Continuous
+  // restoration must not retain a separate canvas for every intermediate tint.
+  var SPRITE = 128, spriteCanvas = null, spriteColour = null;
   function sprite(col) {
-    if (spriteCache[col]) return spriteCache[col];
-    var c = document.createElement('canvas');
-    c.width = c.height = SPRITE;
+    if (spriteColour === col) return spriteCanvas;
+    if (!spriteCanvas) {
+      spriteCanvas = document.createElement('canvas');
+      spriteCanvas.width = spriteCanvas.height = SPRITE;
+    }
+    var c = spriteCanvas;
     var x = c.getContext('2d');
     var rgb = hex(col).join(',');
     var g = x.createRadialGradient(SPRITE / 2, SPRITE / 2, 0, SPRITE / 2, SPRITE / 2, SPRITE / 2);
@@ -671,17 +666,29 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     g.addColorStop(0.42, 'rgba(' + rgb + ',0.10)');
     g.addColorStop(0.68, 'rgba(' + rgb + ',0.03)');
     g.addColorStop(1.00, 'rgba(' + rgb + ',0)');
+    x.clearRect(0, 0, SPRITE, SPRITE);
     x.fillStyle = g;
     x.fillRect(0, 0, SPRITE, SPRITE);
-    spriteCache[col] = c;
+    spriteColour = col;
     return c;
   }
 
+  // Progress, orbit and the completion flare can request the same frame.
+  // Paint once, using their latest values, rather than racing separate draws.
+  var tableFrame = 0;
   function drawTable() {
+    if (tableFrame) return;
+    tableFrame = requestAnimationFrame(function () {
+      tableFrame = 0;
+      paintTable();
+    });
+  }
+  function paintTable() {
     var scale = fitScale();
     var ceil = TCLIP + (1 - TCLIP) * restore;
     var lineCol = mix3(line().l0, line().lm, line().l1, restore);
     var glowCol = mix3(line().g0, line().gm, line().g1, restore);
+    var backLineCol = mixHex(lineCol, token('--alow'), 0.3);
     GLOWNOW = glowCol;
 
     // the whole ramp travels: red while clipped, cream once restored.
@@ -767,7 +774,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
             // the two rims are lines on the table, dissolving into dots in the portal
             g.globalAlpha = 1 - portal;
             g.lineWidth = rr === 0 ? 2.2 : 1.5;
-            g.strokeStyle = rr === 0 ? lineCol : mixHex(lineCol, token('--alow'), 0.3);
+            g.strokeStyle = rr === 0 ? lineCol : backLineCol;
             g.beginPath();
             g.moveTo(px, py);
             g.lineTo(p.x, p.y);
@@ -847,21 +854,13 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   }
   function say(t, bad) { statusEl.textContent = t; statusEl.className = bad ? 'err' : ''; }
 
-  var shown = 0, target = 0, ticking = false;
-  function animateRestore(value) {
-    target = value;
-    if (!ticking) { ticking = true; requestAnimationFrame(tick); }
-  }
-  function tick() {
-    shown += (target - shown) * 0.16;
-    if (Math.abs(target - shown) < 0.001) shown = target;
-    restore = shown; drawTable();
-    if (shown !== target) requestAnimationFrame(tick); else ticking = false;
-  }
   var progress = new OverallProgress(), progressFrame = 0;
   function paintProgress(now) {
     progressFrame = 0;
     var value = progress.tick(now);
+    // The decorative surface and bar share one continuous, time-based value.
+    // This also freezes both together on errors and eases both at completion.
+    if (restore !== value) { restore = value; drawTable(); }
     // Never round an unfinished job up to 100%.
     var percent = value === 1 ? 100 : Math.min(99, Math.floor(value * 100));
     pctEl.textContent = percent + '%';
@@ -880,7 +879,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     pfill.parentElement.setAttribute('aria-valuetext', progress.text);
     if (progressFrame) cancelAnimationFrame(progressFrame);
     paintProgress(performance.now());
-    if (view.phase === 'processing' || view.phase === 'completed') animateRestore(view.value == null ? shown : view.value);
     dlBtn.disabled = busy || !lastRow;
   }
 
@@ -1065,7 +1063,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   }
   function take(file) {
     if (!file || busy) return;
-    dismissCall(); yaw = YAW0; pitch = PITCH0; animateRestore(0);
+    dismissCall(); yaw = YAW0; pitch = PITCH0; drawTable();
     if (!client.active) progress.reset();
     renderState({ busy: true });
     client.submit(file);
@@ -1127,8 +1125,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     var a = (now - t0) / SWAY_MS * Math.PI * 2;
     yaw = YAW0 + Math.sin(a) * SWAY_YAW;
     pitch = PITCH0 + Math.sin(a * 0.61 + 1.1) * SWAY_PITCH;
-    // the render animation already paints every frame; do not paint twice
-    if (!ticking) drawTable();
+    drawTable();
     requestAnimationFrame(swayLoop);
   }
 
@@ -1319,7 +1316,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   surface = synth();
   restore = 0;
   requestAnimationFrame(swayLoop);
-  shown = 0;
+  drawTable();
   paintBank();
   dlBtn.disabled = !lastRow;
   client.initialize();
