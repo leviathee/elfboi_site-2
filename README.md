@@ -152,3 +152,15 @@ Keep private configuration outside the public output directory.
 and slot IDs, and `ads.txt` still need their launch values. `SHOW_EMPTY_SLOTS` in
 `build.py` controls the marked screenshot placeholders. These are independent of
 the backend integration.
+
+## Cancellation
+
+A small Cancel text button beside the progress percentage is visible only while
+there is an active upload or restoration. It aborts local upload/polling and
+requests cancellation of the same remote job. A lost response preserves the
+cancellation request across refresh; Retry continues cancellation rather than
+starting new work. If completion committed first, its download is preserved.
+
+The paired backend cancellation update (Worker and Modal) was deployed and
+verified with real audio on October 20, 2026. The proxy adds only `/api/declip/jobs/:id/cancel`; the
+signed internal cancellation check stays private to the backend.

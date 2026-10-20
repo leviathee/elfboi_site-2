@@ -5,7 +5,7 @@
   "installCommand": "echo no dependencies",
   "routes": [
     {
-      "src": "^/api/declip/(health|session|jobs(?:/[a-f0-9-]{36}(?:/(?:inspect|start|abandon|download-url))?)?)$",
+      "src": "^/api/declip/(health|session|jobs(?:/[a-f0-9-]{36}(?:/(?:inspect|start|abandon|cancel|download-url))?)?)$",
       "dest": "https://declip-web.anthonym-leedom.workers.dev/api/$1",
       "headers": {
         "Cache-Control": "private, no-store"

@@ -129,3 +129,12 @@ test('animation is frame-rate independent and returning from a hidden tab does n
   f.p.tick(f.now() + 120000);
   assert.ok(f.p.value - before <= 0.02);
 });
+
+test('cancelling freezes the bar, and confirmed cancellation resets it without a completion animation', () => {
+  const p = new OverallProgress(); p.reset(0);
+  p.update({busy:true},0); p.tick(500);
+  p.update({busy:true,phase:'cancelling',text:'Cancelling…'},500);
+  const value=p.value; p.tick(5000); assert.equal(p.value,value); assert.equal(p.animating,false);
+  p.update({busy:false,phase:'cancelled'},5000);
+  assert.equal(p.value,0);assert.equal(p.text,'Cancelled');assert.equal(p.animating,false);
+});

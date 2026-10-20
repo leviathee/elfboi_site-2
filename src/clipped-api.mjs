@@ -32,7 +32,7 @@ export function metadataDuration(file, timeout = 2500) {
     timer = setTimeout(finish, timeout); audio.src = url;
   });
 }
-export function uploadFile(grant, file, progress) {
+export function uploadFile(grant, file, progress, signal) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(grant.method || 'PUT', grant.url);
@@ -40,12 +40,17 @@ export function uploadFile(grant, file, progress) {
     xhr.timeout = Math.min(1800000, (grant.expires_in || 1800) * 1000);
     for (const [name, value] of Object.entries(grant.headers || {})) xhr.setRequestHeader(name, value);
     xhr.upload.onprogress = event => { if (event.lengthComputable && event.total) progress(event.loaded / event.total); };
+    const abort = () => xhr.abort();
+    xhr.onloadend = () => signal?.removeEventListener('abort', abort);
+    if (signal?.aborted) { reject(new DOMException('Cancelled', 'AbortError')); return; }
+    signal?.addEventListener('abort', abort, { once: true });
     xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Upload failed. Retry the same file.'));
     xhr.onerror = xhr.ontimeout = xhr.onabort = () => reject(new Error('Upload interrupted. Retry the same file.'));
     xhr.send(file);
   });
 }
 export function jobView(job) {
+  if (job.error === 'job_cancelled') return { phase: 'cancelled', text: 'Cancelled', value: 0, job };
   const phase = job.progress?.stage || job.state;
   const titles = { awaiting_upload: 'Choose the same file to finish uploading', inspecting: 'Checking your audio', ready: 'Preparing your audio',
     downloading: 'Preparing your audio', decoding: 'Preparing your audio', processing: 'Restoring', encoding: 'Preparing download',
@@ -70,25 +75,41 @@ export class DeclipClient {
     Object.assign(this, { base, fetcher, storage, token, upload, duration, wait, hidden, onChange, onQuota, onComplete });
     const active = load(storage, ACTIVE_KEY);
     this.active = active && (validId(active.id) || (typeof active.request?.request_id === 'string' && active.request.request_id.length >= 16)) ? active : null;
+    this.controller = new AbortController(); this.cancelling = false;
     this.running = false; this.file = null; this.job = null; this.session = null;
   }
   persist() { save(this.storage, ACTIVE_KEY, this.active); }
-  emit(view) { this.onChange({ durationSeconds: this.active?.request?.duration_seconds, busy: !!this.active, canRetry: false, canDiscard: false, needsFile: false, ...view }); }
-  async api(path, body) {
+  emit(view) { this.onChange({ durationSeconds: this.active?.request?.duration_seconds, busy: !!this.active, canCancel: !!this.active || this.running, cancelling: this.cancelling, canRetry: false, canDiscard: false, needsFile: false, ...view }); }
+  // Each operation can be interrupted without clearing its durable job reference.
+  interrupt(promise) {
+    const signal = this.controller.signal;
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(new DOMException('Cancelled', 'AbortError'));
+      Promise.resolve(promise).then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
+      if (signal.aborted) { abort(); return; }
+      signal.addEventListener('abort', abort, { once: true });
+    });
+  }
+  async api(path, body, uninterrupted = false) {
+    if (!uninterrupted) this.controller.signal.throwIfAborted();
     const method = body === undefined ? 'GET' : 'POST';
     let response;
     try {
       response = await this.fetcher(this.base + path, { method, credentials: 'same-origin', cache: 'no-store',
         headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(20000) });
-    } catch { throw new ApiError('Reconnecting', 0, method); }
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: uninterrupted ? AbortSignal.timeout(20000) : AbortSignal.any([this.controller.signal, AbortSignal.timeout(20000)]) });
+    } catch {
+      if (!uninterrupted) this.controller.signal.throwIfAborted();
+      throw new ApiError('Reconnecting', 0, method);
+    }
     let data;
     try { data = await response.json(); } catch { throw new ApiError('Service unavailable. Please retry.', response.status >= 400 ? response.status : 502, method); }
+    if (!uninterrupted) this.controller.signal.throwIfAborted();
     if (!response.ok) throw new ApiError(data.error || 'Request failed. Please retry.', response.status, method);
     return data;
   }
   async refreshQuota() {
-    if (!this.quotaRequest) this.quotaRequest = this.api('/session').then(data => {
+    if (!this.quotaRequest) this.quotaRequest = this.api('/session', undefined, true).then(data => {
       this.session = data; this.onQuota(data); return data;
     }).finally(() => { this.quotaRequest = null; });
     return this.quotaRequest;
@@ -97,6 +118,7 @@ export class DeclipClient {
     try {
       await this.refreshQuota();
       if (this.active) {
+        if (this.active.cancelRequested) { await this.cancel(); return; }
         if (this.active.id) await this.drive();
         else this.needFile();
       } else if (!this.running) this.emit({ text: 'Waiting for a file', value: 0 });
@@ -106,24 +128,30 @@ export class DeclipClient {
     this.emit({ phase: 'awaiting_upload', text: 'Choose the same file to finish uploading', needsFile: true, canDiscard: true });
   }
   problem(error) {
+    if (this.cancelling || error?.name === 'AbortError') return;
     if (error instanceof ApiError && error.status === 410 && this.active?.id && this.job?.state === 'created') {
       this.emit({ text: 'Upload window expired. Discard this upload to choose another file.', error: true, canDiscard: true });
       return;
     }
     if (error instanceof ApiError && [401, 404, 410].includes(error.status)) {
       this.active = null; this.file = null; this.persist();
-      this.emit({ text: 'This file is no longer available in this browser', error: true });
+      this.emit({ text: 'This file is no longer available in this browser', error: true, canCancel: false });
       return;
     }
-    this.emit({ text: error.message || 'Please retry', error: true, canRetry: true,
+    this.emit({ text: error.message || 'Please retry', error: true, canRetry: true, canCancel: !!this.active,
       canDiscard: !!this.active && (!this.job || this.job.state === 'created'), needsFile: !!this.active && !this.file && !this.active.uploaded });
   }
-  async submit(file) {
-    if (!file || this.running) return;
+  submit(file) {
+    if (!file || this.running || this.cancelling || this.active?.cancelRequested) return;
+    this.controller = new AbortController();
+    return this.work = this.submitFile(file);
+  }
+  async submitFile(file) {
     if (this.active && this.job && this.job.state !== 'created') return;
     this.running = true;
+    this.emit({ text: 'Reading the file', busy: true });
     try {
-      if (!this.session) await this.refreshQuota();
+      if (!this.session) await this.interrupt(this.refreshQuota());
       if (file.size <= 0 || file.size > this.session.limits.max_bytes) throw new Error('Choose a file up to 200 MiB');
       if (this.active?.request) {
         const prior = this.active.request;
@@ -132,7 +160,7 @@ export class DeclipClient {
         }
       } else {
         this.emit({ text: 'Reading the file', busy: true });
-        const estimate = await this.duration(file);
+        const estimate = await this.interrupt(this.duration(file));
         this.active = { request: { request_id: crypto.randomUUID(), filename: file.name, size: file.size,
           duration_seconds: Number.isFinite(estimate) && estimate > 0 && estimate <= this.session.limits.max_seconds ? estimate : null },
           lastModified: file.lastModified, uploaded: false };
@@ -140,38 +168,47 @@ export class DeclipClient {
       }
       this.file = file;
       await this.create();
+      this.controller.signal.throwIfAborted();
     } catch (error) { this.problem(error); return; }
     finally { this.running = false; }
-    await this.drive();
+    if (!this.cancelling) await this.drive();
   }
   async create() {
     this.emit({ text: this.active.id ? 'Reconnecting' : 'Preparing your audio' });
-    const token = this.active.id || this.session.local ? '' : await this.token();
-    const result = await this.api('/jobs', { ...this.active.request, turnstile_token: token });
+    const token = this.active.id || this.session.local ? '' : await this.interrupt(this.token(this.controller.signal));
+    this.controller.signal.throwIfAborted();
+    // Let an in-flight create settle so cancellation knows which job to stop.
+    const result = await this.api('/jobs', { ...this.active.request, turnstile_token: token }, true);
     this.active.id = result.job.id; this.persist(); this.job = result.job;
     this.grant = result.upload;
     this.refreshQuota().catch(() => {});
   }
   async retry() {
-    if (this.running) return;
+    if (this.active?.cancelRequested) return this.cancel();
+    if (this.running || this.cancelling) return;
+    this.controller = new AbortController();
     if (!this.session) return this.initialize();
     if (!this.active) return this.initialize();
     if (!this.active.id) {
       if (!this.file) return this.needFile();
       this.running = true;
-      try { await this.create(); } catch (error) { this.problem(error); return; } finally { this.running = false; }
+      try { await (this.work = this.create()); this.controller.signal.throwIfAborted(); } catch (error) { this.problem(error); return; } finally { this.running = false; }
     }
     this.retryInspection = true;
     await this.drive();
   }
-  async drive() {
-    if (this.running || !this.active?.id) return;
+  drive() {
+    if (this.running || this.cancelling || !this.active?.id) return;
+    return this.work = this.driveJob();
+  }
+  async driveJob() {
     this.running = true;
     let failures = 0, quotaState = '';
     try {
-      while (this.active?.id) {
+      while (this.active?.id && !this.cancelling) {
         try {
           const { job } = await this.api('/jobs/' + this.active.id);
+          if (this.cancelling) return;
           this.job = job;
           const nextQuota = job.state + ':' + job.actual_seconds;
           if (quotaState !== nextQuota) { quotaState = nextQuota; this.refreshQuota().catch(() => {}); }
@@ -180,7 +217,7 @@ export class DeclipClient {
             const name = this.active.request?.filename || job.download_name;
             if (job.state === 'completed') this.onComplete({ id: job.id, name, out: job.download_name,
               dur: job.actual_seconds || job.inspection?.source?.duration_seconds || 0, expires_at: job.expires_at }, job);
-            this.active = null; this.file = null; this.persist(); this.emit(jobView(job)); return;
+            this.active = null; this.file = null; this.persist(); this.emit({ ...jobView(job), canCancel: false }); return;
           }
           if (job.state === 'created') {
             if (job.inspection_error && !this.retryInspection) {
@@ -196,7 +233,8 @@ export class DeclipClient {
                 if (!this.grant) await this.create();
                 if (this.job.state !== 'created' || this.job.inspection || this.job.progress?.stage === 'inspecting') continue;
                 try {
-                  await this.upload(this.grant, this.file, value => this.emit({ text: value < 1 ? 'Uploading' : 'Checking your audio', phase: 'upload', value }));
+                  await this.upload(this.grant, this.file, value => { if (!this.cancelling) this.emit({ text: value < 1 ? 'Uploading' : 'Checking your audio', phase: 'upload', value }); }, this.controller.signal);
+                  this.controller.signal.throwIfAborted();
                 } catch (error) { this.grant = null; throw error; }
                 this.active.uploaded = true; this.persist(); this.grant = null;
               }
@@ -206,19 +244,54 @@ export class DeclipClient {
             }
           }
           failures = 0;
-          await this.wait(this.hidden() ? 5000 : 1000);
+          await this.interrupt(this.wait(this.hidden() ? 5000 : 1000));
         } catch (error) {
+          if (this.cancelling || error?.name === 'AbortError') return;
           // A lost response is not a failed restoration. Read the same job before
           // retrying idempotent inspect/start; never create a replacement job.
           if (error instanceof ApiError && (error.status === 0 || (error.method === 'GET' && error.status >= 500))) {
             this.emit({ text: 'Reconnecting', phase: 'reconnecting', job: this.job });
-            await this.wait(Math.min(15000, (this.hidden() ? 5000 : 1000) * 2 ** Math.min(failures++, 4)));
+            await this.interrupt(this.wait(Math.min(15000, (this.hidden() ? 5000 : 1000) * 2 ** Math.min(failures++, 4))));
             continue;
           }
           this.problem(error); return;
         }
       }
-    } finally { this.running = false; }
+    } catch (error) { this.problem(error); } finally { this.running = false; }
+  }
+  async cancel() {
+    if (this.cancelling || (!this.active && !this.running)) return;
+    this.cancelling = true;
+    if (this.active) { this.active.cancelRequested = true; this.persist(); }
+    this.controller.abort();
+    this.emit({ phase: 'cancelling', text: 'Cancelling…', busy: true, canCancel: true });
+    try {
+      // Drain the old operation before clearing state or allowing a new file.
+      // In-flight creates settle; uploads, polling and verification abort.
+      await this.work?.catch(() => {});
+      if (this.active && !this.active.id) {
+        try {
+          const result = await this.api('/jobs', { ...this.active.request, turnstile_token: '' }, true);
+          this.active.id = result.job.id; this.persist();
+        } catch (error) {
+          if (!(error instanceof ApiError && [400, 403].includes(error.status))) throw error;
+        }
+      }
+      const job = this.active?.id ? (await this.api(`/jobs/${this.active.id}/cancel`, {}, true)).job : null;
+      if (job?.state === 'completed') {
+        this.onComplete({ id: job.id, name: this.active.request?.filename || job.download_name,
+          out: job.download_name, dur: job.actual_seconds || job.inspection?.source?.duration_seconds || 0,
+          expires_at: job.expires_at }, job);
+      }
+      this.active = null; this.file = null; this.job = null; this.grant = null; this.persist();
+      this.cancelling = false;
+      this.controller = new AbortController();
+      this.emit(job ? jobView(job) : { phase: 'cancelled', text: 'Cancelled', value: 0 });
+      this.refreshQuota().catch(() => {});
+    } catch {
+      this.cancelling = false;
+      this.emit({ phase: 'cancelling', text: 'Could not confirm cancellation. Retry to cancel.', error: true, canRetry: true });
+    }
   }
   async abandon() {
     if (this.running || !this.active) return;

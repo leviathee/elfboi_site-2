@@ -168,3 +168,129 @@ test('initial session loading cannot reset the UI while a dropped file is being 
   await submitting;
   assert.equal(f.completed.length, 1);
 });
+
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+function cancelFixture(options = {}) {
+  const f = fixture(options), fetcher = f.client.fetcher;
+  let attempts = 0;
+  f.client.fetcher = async (path, init) => {
+    if (path.endsWith('/cancel')) {
+      f.requests.push({ path, body: {}, method: 'POST' });
+      if (options.failCancel && attempts++ === 0) throw new TypeError('offline');
+      return Response.json({ job: options.completed ? { id, state: 'completed', actual_seconds: 12, expires_at: 9999999999, download_name: 'restored.wav' }
+        : { id, state: 'expired', error: 'job_cancelled' } });
+    }
+    return fetcher(path, init);
+  };
+  return f;
+}
+test('cancel while reading metadata stops before creating or uploading and allows a fresh file', async () => {
+  const entered = deferred(), metadata = deferred();
+  const f = cancelFixture({ readDuration: () => { entered.resolve(); return metadata.promise; } });
+  const submitting = f.client.submit(file); await entered.promise;
+  await f.client.cancel(); await submitting;
+  assert.equal(f.counts.creates, 0); assert.equal(f.counts.uploads, 0);
+  assert.equal(f.views.at(-1).phase, 'cancelled'); assert.equal(f.views.at(-1).busy, false);
+  metadata.resolve(12); await Promise.resolve();
+  assert.equal(f.client.active, null);
+  f.client.duration = async () => 12; await f.client.submit(file);
+  assert.equal(f.completed.length, 1);
+});
+test('cancel aborts an in-flight upload and never starts inspection', async () => {
+  const entered = deferred(); const f = cancelFixture(); let aborted = false;
+  f.client.upload = (grant, file, progress, signal) => new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => { aborted = true; reject(new DOMException('Cancelled', 'AbortError')); });
+    entered.resolve();
+  });
+  const submitting = f.client.submit(file); await entered.promise;
+  await f.client.cancel(); await submitting;
+  assert.equal(aborted, true); assert.equal(f.counts.inspectPosts, 0);
+  assert.equal(f.completed.length, 0); assert.equal(f.client.active, null);
+  assert.equal(f.requests.filter(r=>r.path.endsWith('/cancel')).length, 1);
+});
+test('cancel waits for an in-flight create and cancels that exact job', async () => {
+  const entered = deferred(), release = deferred(); const f = cancelFixture(); const fetcher=f.client.fetcher;
+  f.client.fetcher=async (path,init)=> {
+    if (path === '/api/declip/jobs') { entered.resolve(); await release.promise; }
+    return fetcher(path,init);
+  };
+  const submitting=f.client.submit(file); await entered.promise;
+  const cancelling=f.client.cancel();
+  assert.equal(f.views.at(-1).phase,'cancelling');
+  release.resolve(); await cancelling; await submitting;
+  assert.equal(f.counts.uploads,0); assert.equal(f.counts.creates,1);
+  assert.equal(f.requests.filter(r=>r.path.endsWith('/cancel')).length,1);
+  assert.equal(f.client.active,null);
+});
+test('cancelling preparation, queueing and inference interrupts polling without creating replacement jobs', async () => {
+  for (const state of ['created','queued','processing']) {
+    const store=storage(); saveActive(store);
+    const f=cancelFixture({storage:store,job:{state,progress:{stage:state==='created'?'inspecting':state}}});
+    const entered=deferred(); f.client.wait=()=>{entered.resolve();return new Promise(()=>{});};
+    const initializing=f.client.initialize();await entered.promise;
+    await f.client.cancel();await initializing;
+    assert.equal(f.completed.length,0);assert.equal(f.counts.creates,0);assert.equal(f.client.active,null);
+    assert.equal(f.views.at(-1).text,'Cancelled');
+  }
+});
+test('failed cancellation survives refresh and resumes cancellation instead of restoration', async () => {
+  const store=storage();saveActive(store);
+  const f=cancelFixture({storage:store,failCancel:true});await f.client.cancel();
+  assert.equal(JSON.parse(store.getItem(activeKey)).cancelRequested,true);
+  assert.equal(f.views.at(-1).canRetry,true);
+  const resumed=cancelFixture({storage:store});await resumed.client.initialize();
+  assert.equal(resumed.counts.startPosts,0);assert.equal(resumed.counts.statusGets,0);
+  assert.equal(resumed.client.active,null);assert.equal(store.getItem(activeKey),undefined);
+});
+test('a completed result winning the cancellation race is preserved in the bank', async () => {
+  const store=storage();saveActive(store);
+  const f=cancelFixture({storage:store,completed:true});await f.client.cancel();
+  assert.equal(f.completed.length,1);assert.equal(f.completed[0].id,id);
+  assert.equal(f.views.at(-1).phase,'completed');assert.equal(f.client.active,null);
+});
+test('uncertain create is resolved using the same request before cancellation', async () => {
+  const f=cancelFixture({failCreate:true});await f.client.submit(file);await f.client.cancel();
+  const creates=f.requests.filter(r=>r.path==='/api/declip/jobs');
+  assert.equal(creates.length,2);assert.equal(creates[0].body.request_id,creates[1].body.request_id);
+  assert.equal(creates[1].body.turnstile_token,'');assert.equal(f.counts.uploads,0);
+  assert.equal(f.client.active,null);
+});
+test('cancel is allowed through the website proxy, while internal cancellation checks remain private', () => {
+  const config=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
+  const pattern=new RegExp(config.routes[0].src);
+  assert.ok(pattern.test(`/api/declip/jobs/${id}/cancel`));
+  assert.equal(pattern.test(`/api/declip/internal/modal/${id}/cancel-check`),false);
+});
+
+test('cancel during verification aborts the token wait and never uploads', async () => {
+  const f=cancelFixture(), entered=deferred(); let aborted=false;
+  f.client.token=signal=>new Promise((resolve,reject)=>{
+    signal.addEventListener('abort',()=>{aborted=true;reject(new DOMException('Cancelled','AbortError'));});
+    entered.resolve();
+  });
+  const submitting=f.client.submit(file);await entered.promise;
+  await f.client.cancel();await submitting;
+  assert.equal(aborted,true);assert.equal(f.counts.uploads,0);assert.equal(f.counts.inspectPosts,0);
+  assert.equal(f.client.active,null);
+});
+test('a stale polling response after cancel cannot start inference or overwrite the cancelled state', async () => {
+  const store=storage();saveActive(store);const f=cancelFixture({storage:store});
+  const entered=deferred(),release=deferred(),fetcher=f.client.fetcher;
+  f.client.fetcher=async(path,init)=>{
+    if(path==='/api/declip/jobs/'+id){entered.resolve();await release.promise;return Response.json({job:{id,state:'created',inspection:{id:'inspection'}}});}
+    return fetcher(path,init);
+  };
+  const initializing=f.client.initialize();await entered.promise;
+  const cancelling=f.client.cancel();release.resolve();await cancelling;await initializing;
+  assert.equal(f.counts.startPosts,0);assert.equal(f.views.at(-1).phase,'cancelled');
+});
+test('retry after uncertain cancellation keeps cancelling rather than restarting work', async () => {
+  const store=storage();saveActive(store);const f=cancelFixture({storage:store,failCancel:true});
+  await f.client.cancel();await f.client.retry();
+  assert.equal(f.requests.filter(r=>r.path.endsWith('/cancel')).length,2);
+  assert.equal(f.counts.statusGets,0);assert.equal(f.client.active,null);
+});

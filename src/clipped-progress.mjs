@@ -27,6 +27,8 @@ export class OverallProgress {
       // The download is already available; only the final visual fill eases out.
       this.active = false; this.text = 'Done'; return;
     }
+    if (view.phase === 'cancelled') { this.reset(now); this.text = 'Cancelled'; return; }
+    if (view.phase === 'cancelling') { this.active = false; this.finishing = false; this.rate = 0; this.text = view.text; return; }
     if (view.error || view.needsFile || view.phase === 'reconnecting' || view.text === 'Reconnecting') {
       this.active = false; this.rate = 0; this.text = view.text; return;
     }
