@@ -519,6 +519,7 @@
 
 <script type="module">
 import { ApiError, DeclipClient, readBank, saveBank } from "./src/clipped-api.mjs";
+import { OverallProgress } from "./src/clipped-progress.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
    Fill these in once the site is live on its own domain and the AdSense account
@@ -857,20 +858,29 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     restore = shown; drawTable();
     if (shown !== target) requestAnimationFrame(tick); else ticking = false;
   }
+  var progress = new OverallProgress(), progressFrame = 0;
+  function paintProgress(now) {
+    progressFrame = 0;
+    var value = progress.tick(now);
+    // Never round an unfinished job up to 100%.
+    var percent = value === 1 ? 100 : Math.min(99, Math.floor(value * 100));
+    pctEl.textContent = percent + '%';
+    pfill.style.width = (value * 100) + '%';
+    pfill.parentElement.setAttribute('aria-valuenow', String(percent));
+    if (progress.active) progressFrame = requestAnimationFrame(paintProgress);
+  }
   function renderState(view) {
     busy = view.busy && !view.needsFile;
     fileIn.disabled = busy;
     scope.setAttribute('aria-disabled', String(busy));
     retryBtn.hidden = !view.canRetry;
     discardBtn.hidden = !view.canDiscard;
-    say(view.text + (view.warning && !view.error ? ' · ' + view.warning : ''), view.error);
-    var value = view.value;
-    pctEl.textContent = value == null ? '—' : Math.round(value * 100) + '%';
-    pfill.style.width = value == null ? '0%' : (value * 100) + '%';
-    pfill.parentElement.setAttribute('aria-valuetext', view.text);
-    if (value == null) pfill.parentElement.removeAttribute('aria-valuenow');
-    else pfill.parentElement.setAttribute('aria-valuenow', String(Math.round(value * 100)));
-    if (view.phase === 'processing' || view.phase === 'completed') animateRestore(value == null ? shown : value);
+    progress.update(view);
+    say(progress.text, view.error);
+    pfill.parentElement.setAttribute('aria-valuetext', progress.text);
+    if (progressFrame) cancelAnimationFrame(progressFrame);
+    paintProgress(performance.now());
+    if (view.phase === 'processing' || view.phase === 'completed') animateRestore(view.value == null ? shown : view.value);
     dlBtn.disabled = busy || !lastRow;
   }
 
@@ -904,7 +914,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   async function getToken() {
     await prepareVerification(client.session);
     if (!challengeToken) {
-      say('Verifying');
       await new Promise(function (resolve, reject) {
         var timer = setTimeout(function () { tokenWaiter.reject(new Error('Verification timed out. Please retry.')); }, 180000);
         tokenWaiter = { resolve: function (token) { clearTimeout(timer); tokenWaiter = null; resolve(token); },
@@ -1057,6 +1066,8 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   function take(file) {
     if (!file || busy) return;
     dismissCall(); yaw = YAW0; pitch = PITCH0; animateRestore(0);
+    if (!client.active) progress.reset();
+    renderState({ busy: true });
     client.submit(file);
   }
 

@@ -18,7 +18,7 @@ function fixture(options = {}) {
     created_at: 100, expires_at: 9999999999, download_name: 'voice-declipped-mono-48k.wav', ...options.job };
   const inspection = { id: 'inspection', source: { duration_seconds: 12, channels: 2 } };
   const client = new DeclipClient({ storage: store, hidden: () => !!options.hidden,
-    duration: async () => options.duration ?? null, token: async () => 'challenge',
+    duration: options.readDuration || (async () => options.duration ?? null), token: async () => 'challenge',
     onChange: v => views.push(v), onQuota: () => {}, onComplete: row => completed.push(row),
     wait: async ms => {
       waits.push(ms); assert.ok(waits.length < 20, 'polling must converge');
@@ -151,4 +151,20 @@ test('an expired upload grant keeps the job available for discard and quota rele
   assert.equal(f.views.at(-1).canDiscard, true);
   assert.equal(f.views.at(-1).canRetry, false);
   await f.client.abandon(); assert.equal(f.client.active, null);
+});
+
+
+test('initial session loading cannot reset the UI while a dropped file is being read', async () => {
+  let release, entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  const metadata = new Promise(resolve => { release = resolve; });
+  const f = fixture({ readDuration: () => { entered(); return metadata; } });
+  const initializing = f.client.initialize();
+  const submitting = f.client.submit(file);
+  await started;
+  await initializing;
+  assert.equal(f.views.some(v => v.text === 'Waiting for a file'), false);
+  release(12);
+  await submitting;
+  assert.equal(f.completed.length, 1);
 });
