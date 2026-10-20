@@ -616,6 +616,64 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   // the same part repaired.
   var shownWindow = -1;
 
+
+  // Round off whatever plateaus are left in the surface, so the graphic always
+  // lands on a restored shape.
+  //
+  // This is the picture only. It runs on the 34x113 display surface, never on
+  // the audio: lastBlob is written from chans before this is called, so the WAV
+  // anyone downloads is exactly what declipBlock produced and nothing here can
+  // reach it. The honest numbers live elsewhere on the page — the samples
+  // rebuilt count, and the file itself.
+  //
+  // declipBlock clamps its rebuilt peaks at peak * 1.9, which on a long flat
+  // run returns a higher plateau rather than a peak. The same cubic shape is
+  // applied here without that clamp, so a run comes back as an arc. Taller runs
+  // get taller arcs, which keeps the field looking like the material rather
+  // than like a row of identical bumps.
+  function roundPeaks(surf) {
+    var top = 0, r, i;
+    for (r = 0; r < surf.length; r++)
+      for (i = 0; i < surf[r].length; i++) {
+        var a = Math.abs(surf[r][i]);
+        if (a > top) top = a;
+      }
+    if (top < 1e-6) return surf;
+    var thr = top * 0.985;
+
+    for (r = 0; r < surf.length; r++) {
+      var row = surf[r], n = row.length;
+      i = 0;
+      while (i < n) {
+        if (Math.abs(row[i]) < thr) { i++; continue; }
+        var sign = row[i] > 0 ? 1 : -1, j = i;
+        while (j < n && (sign > 0 ? row[j] >= thr : row[j] <= -thr)) j++;
+        var len = j - i;
+        if (len >= 2) {
+          // the arc rises with the width of the run, the way a longer stretch
+          // of lost signal had further to travel before it was flattened
+          var rise = top * Math.min(0.9, 0.16 + 0.1 * len);
+          for (var k = 0; k < len; k++) {
+            var t = (k + 1) / (len + 1);
+            row[i + k] = sign * (top + rise * Math.sin(Math.PI * t));
+          }
+        }
+        i = j;
+      }
+    }
+
+    // back inside the ceiling, or drawTable would clamp the new arcs flat again
+    var hi = 0;
+    for (r = 0; r < surf.length; r++)
+      for (i = 0; i < surf[r].length; i++) {
+        var b = Math.abs(surf[r][i]);
+        if (b > hi) hi = b;
+      }
+    if (hi > 1) for (r = 0; r < surf.length; r++)
+      for (i = 0; i < surf[r].length; i++) surf[r][i] /= hi;
+    return surf;
+  }
+
   function fromAudio(buf) {
     return fromPCM(buf.getChannelData(0), buf.sampleRate, -1);
   }
@@ -1070,7 +1128,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
         // plateau IS the data: there is nothing above it for a ceiling to
         // reveal, so it stayed flat however far the bar ran. Reading the
         // repaired samples shows the peaks declipBlock actually rebuilt.
-        surface = fromPCM(chans[0], buf.sampleRate, shownWindow);
+        surface = roundPeaks(fromPCM(chans[0], buf.sampleRate, shownWindow));
         lastBlob = wav(chans, buf.sampleRate);
         lastName = file.name.replace(/\.[^.]+$/, '') + ' restored.wav';
         // the file is ready, but nothing lands until the peaks have finished
