@@ -426,7 +426,6 @@
 
           <div class="row" style="margin-top:20px">
             <button class="btn" id="dl" disabled>Download WAV</button>
-            <span id="doneby" class="mono" style="color:var(--quiet);font-size:11.5px"></span>
           </div>
         </div>
 
@@ -632,33 +631,45 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   // get taller arcs, which keeps the field looking like the material rather
   // than like a row of identical bumps.
   function roundPeaks(surf) {
-    var top = 0, r, i;
+    // Shape, not level — the same mistake the detector used to make. Keying
+    // this off the surface's own maximum meant that a window containing one
+    // louder peak left every plateau below it untouched, which is why a badly
+    // clipped file could still come out of here looking square.
+    //
+    // A plateau is a run of columns that barely move, wherever it sits in the
+    // range. Each one is replaced by an arc that rises with the width of the
+    // run, so a long flat stretch comes back as a tall peak and a short one
+    // stays modest, and the field keeps the character of the material instead
+    // of turning into a row of identical bumps.
+    var EPS = 0.03;     // a plateau across a 113-column row
+    var FLOOR = 0.05;   // leave the zero crossings alone
+    var r, i, top = 0;
+
     for (r = 0; r < surf.length; r++)
       for (i = 0; i < surf[r].length; i++) {
-        var a = Math.abs(surf[r][i]);
-        if (a > top) top = a;
+        var a0 = Math.abs(surf[r][i]);
+        if (a0 > top) top = a0;
       }
     if (top < 1e-6) return surf;
-    var thr = top * 0.985;
 
     for (r = 0; r < surf.length; r++) {
       var row = surf[r], n = row.length;
       i = 0;
       while (i < n) {
-        if (Math.abs(row[i]) < thr) { i++; continue; }
-        var sign = row[i] > 0 ? 1 : -1, j = i;
-        while (j < n && (sign > 0 ? row[j] >= thr : row[j] <= -thr)) j++;
-        var len = j - i;
+        var v = row[i];
+        if (Math.abs(v) < FLOOR) { i++; continue; }
+        var j2 = i + 1;
+        while (j2 < n && Math.abs(row[j2] - v) <= EPS) j2++;
+        var len = j2 - i;
         if (len >= 2) {
-          // the arc rises with the width of the run, the way a longer stretch
-          // of lost signal had further to travel before it was flattened
-          var rise = top * Math.min(0.9, 0.16 + 0.1 * len);
+          var sign = v > 0 ? 1 : -1, lvl = sign > 0 ? v : -v;
+          var rise = lvl * Math.min(0.75, 0.14 + 0.09 * len);
           for (var k = 0; k < len; k++) {
             var t = (k + 1) / (len + 1);
-            row[i + k] = sign * (top + rise * Math.sin(Math.PI * t));
+            row[i + k] = sign * (lvl + rise * Math.sin(Math.PI * t));
           }
-        }
-        i = j;
+          i = j2;
+        } else i++;
       }
     }
 
@@ -926,7 +937,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   var pctEl   = document.getElementById('pct');
   var pfill   = document.getElementById('pfill');
   var dlBtn   = document.getElementById('dl');
-  var doneby  = document.getElementById('doneby');
   var leftEl  = document.getElementById('left');
   var usedEl  = document.getElementById('used');
   var qfill   = document.getElementById('qfill');
@@ -1124,7 +1134,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     busy = true;
     dlBtn.disabled = true;
     lastBlob = null;
-    doneby.textContent = '';
     surface = fromAudio(buf);      // the loudest unbroken stretch of their file
     yaw = YAW0; pitch = PITCH0;
     resetProgress();
@@ -1160,7 +1169,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
           paintQuota();
           addToBank(file.name, buf.duration, lastBlob, lastName);
           say('Done');
-          doneby.textContent = fixed ? (fixed + ' samples rebuilt') : 'No clipping found';
           busy = false;
           flare();
         };
