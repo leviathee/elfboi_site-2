@@ -1,54 +1,67 @@
 # elfboi.io — site source
 
-Static site. No framework, no build step at deploy time, no dependencies.
-`python3 build.py` regenerates every `.html` file in this folder from
-`build.py` plus `src/`. Hosting is Vercel, which serves `index.html` at the
-root with no configuration.
+Static site on Vercel. `python3 build.py` generates the root HTML pages from
+`build.py` and `src/`; Vercel runs that command on deployment. No framework or
+package installation is required.
 
-To look at it: open `index.html` in a browser. Everything works from the
-file system except the newsletter forms.
+**Edit `src/clipped-web.html`, not generated `tools-clipped-browser.html`.**
+The page retains the existing design, static copy and controls. Its small
+`src/clipped-api.mjs` module handles the Declip API and durable job lifecycle.
+Static copy corrections are deferred to the designer.
 
----
+## Clipped Browser integration
 
-## READ THIS FIRST
+The browser uses same-origin `/api/declip/*` through the routes in `vercel.json`.
+Audio uploads, playback and downloads go directly to private R2 using short-lived
+signed URLs. The original file is uploaded without requiring a full browser
+decode; metadata-only duration lookup has a short timeout and a null fallback.
+The server verifies duration and enforces quotas. There is no local restoration
+fallback and no comparison player.
 
-**`tools-clipped-browser.html` is generated. Do not edit it.**
+One active job and up to ten bank references persist in this browser. Refresh or
+a lost connection resumes the same remote job. Retry keeps the same create
+request and uploaded file; queued/running work cannot be cancelled by removing
+local state. Files expire 24 hours after job creation. Bank playback uses one
+streaming media element rather than decoding long WAVs into memory. Removing a
+bank row removes its local reference only. Cookie loss can prevent recovery.
 
-It is a verbatim copy of `src/clipped-web.html`, made every time
-`build.py` runs. Edit `src/clipped-web.html` and run `python3 build.py`.
-Anything typed into `tools-clipped-browser.html` is gone on the next build.
+The backend is https://github.com/a-n-t-h-o-n-y/declip-backend-2.
+See its [integration and cutover guide](https://github.com/a-n-t-h-o-n-y/declip-backend-2/blob/elfboi-backend-integration/docs/elfboi-integration.md)
+for the paired branch and production verification still required. The main
+configuration steps are:
 
-That one file is the whole Clipped Browser app — markup, styles, audio
-engine and UI, about 110 KB, no imports. It is the file the backend work
-happens in.
+- Set the Vercel production environment variable `DECLIP_PROXY_SECRET` to the
+  same private random value as the Worker's `VERCEL_PROXY_SECRET` (32+ characters).
+  The route overwrites `X-Declip-Proxy-Secret` on the server; never put its value
+  in browser code, Git or response headers.
+- At cutover set Worker `PUBLIC_API_PROXY=vercel`, set `APP_ORIGIN` to the exact
+  canonical website origin, and configure matching Turnstile hostname and R2
+  CORS. Verify apex/www redirects first. Production API requests fail closed if
+  the proxy secret or Vercel visitor address is missing/invalid.
+- Keep signed Modal callbacks on the Worker origin. The site route excludes
+  internal callbacks, local object endpoints and comparison endpoints. Ordinary
+  site pages, newsletter forms and static build settings retain their behavior.
+- Do not give ordinary Vercel previews production secret access or wildcard
+  production origin permissions. Use mocked API responses for visual previews.
 
----
+## Build and checks
 
-## Where the backend hooks are
-
-Everything below is in `src/clipped-web.html` unless stated otherwise.
-
-### 1. The daily limit is not enforced
-
-```js
-var DAILY = 20 * 60;    // ~line 863
-var usedToday = 0;      // ~line 864
+```sh
+python3 build.py
+node --test tests/*.test.mjs
+python3 -m http.server 8000
 ```
 
-`usedToday` is an ordinary variable in memory. It is not persisted
-anywhere — no `localStorage`, no cookie, no server call — so **refreshing
-the page resets the quota to zero**. There is no fetch or XMLHttpRequest
-anywhere in the app; nothing has ever talked to a server.
+Open `http://localhost:8000/` for static previews. The Python preview server does
+not implement `/api/declip`; live processing needs the configured Vercel route
+and backend. The tests use in-memory API fixtures to cover upload, asynchronous
+inspection, queues, refresh, uncertain responses, retries and expiring grants.
 
-The UI around it is finished and correct: `paintQuota()` draws the meter,
-`paintReset()` writes the "resets at midnight" line in the reader's own
-time zone, and the over-limit refusal is at ~line 1284. It is only the
-counting that needs somewhere real to live.
+The canvas remains a decorative progress animation. Browser progress reflects
+upload bytes or restoration chunks; waiting and saving are indeterminate.
+Minimal recovery controls use the existing styling and appear only when needed.
 
-Worth knowing before choosing an approach: audio never leaves the browser.
-Decoding and restoration both happen client-side via Web Audio, which is a
-selling point on the page ("Your Audio — never uploaded"). Any quota scheme
-should keep that true — send the server durations, not files.
+## Other integrations
 
 ### 2. Google AdSense — configured, dormant
 
@@ -84,45 +97,21 @@ still points at `#`.**
 
 ---
 
+## Source layout
+
+- `build.py`: page generation and tool/catalog content.
+- `src/clipped-web.html`: Clipped Browser markup, styling and presentation.
+- `src/clipped-api.mjs`: Declip session, uploads, saved jobs and recovery.
+- `elfboi.css`, `elfboi.js`: shared site styling and interactions.
+- `images/`, `audio/`: artwork and demo clips.
+- `tests/clipped-api.test.mjs`: focused API client and route regression checks.
+
+Generated root HTML, local dependencies and QA screenshots are ignored by Git.
+Keep private configuration outside the public output directory.
+
 ## Known placeholders
 
-| What | Where |
-|---|---|
-| `VIDEO_ID` in YouTube embeds | `build.py` — tool pages, `learn.html`, template walkthroughs |
-| `BUY["clipped-pro"]` | missing — Buy now on `clipped.html` goes to `#` |
-| AdSense `pub` and the three slot ids | `src/clipped-web.html` ~line 495 |
-| `SHOW_EMPTY_SLOTS = True` | `build.py` ~line 297 — flip to `False` at launch to hide the marked screenshot slots |
-| `ads.txt` | not created yet; needs the publisher ID |
-
----
-
-## Layout
-
-```
-build.py                  everything is generated from here
-src/clipped-web.html      the Clipped Browser app (hand-maintained)
-elfboi.css                all styles, numbered sections, tokens at the top
-elfboi.js                 nav, filters, audio players, galleries
-index.html                the home page
-*.html                    28 generated pages
-images/                   artwork, screenshots, video
-audio/                    the six clipped/restored demo clips on clipped.html
-audio/original/           Lien's untouched source files, not served — kept
-                          for reference only, safe to delete from a deploy
-```
-
-`elfboi.css` is one file in numbered sections, newest last. A later section
-can override an earlier one, and several deliberately do; the comments say
-why where it matters.
-
----
-
-## Deploying
-
-Upload the folder. `index.html` is the entry point. Nothing needs to be
-compiled, bundled or installed. `build.py` is for regenerating the HTML, not
-for serving.
-
-Excluded from this package, by `.gitignore`: `node_modules/`, `package*.json`,
-`qa-fonts.css`, `fonts/` and `__pycache__/`. Those are QA scaffolding used
-while checking rendering and are not part of the site.
+`VIDEO_ID` embeds, most `BUY` entries including `clipped-pro`, AdSense publisher
+and slot IDs, and `ads.txt` still need their launch values. `SHOW_EMPTY_SLOTS` in
+`build.py` controls the marked screenshot placeholders. These are independent of
+the backend integration.

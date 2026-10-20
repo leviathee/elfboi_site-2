@@ -262,6 +262,7 @@
          font-size: 13px; letter-spacing: 0.02em; }
   .row #pct, .row #left { font-family: var(--mono); font-weight: 400; letter-spacing: 0.05em; }
   .rail-line { height: 3px; background: #3D3936; margin-top: 11px; }
+  [hidden] { display: none !important; }
   .rail-line .fill { height: 3px; width: 0%; background: var(--gold); transition: width 120ms linear; }
   .rail-line.quota .fill { background: var(--red); transition: width 300ms linear; }
   .note { font-size: 12.5px; color: var(--quiet); margin-top: 10px; line-height: 1.5;
@@ -418,6 +419,11 @@
           <h2>Render</h2>
           <div class="row"><span id="status">Waiting for a file</span><span id="pct">0%</span></div>
           <div class="rail-line"><div class="fill" id="pfill"></div></div>
+          <div id="verification"></div>
+          <div class="row">
+            <button class="btn" id="retry" type="button" hidden>Retry</button>
+            <button class="btn" id="discard" type="button" hidden>Discard upload</button>
+          </div>
 
           <h2 style="margin-top:22px">Daily Usage Limit</h2>
           <div class="row"><span id="used">0:00 of 20:00 used</span><span id="left">20:00 left</span></div>
@@ -511,7 +517,8 @@
 <div class="foot"><div class="in">Feedback Is Welcomed! Write to
   <a href="mailto:hello@elfboi.io">hello@elfboi.io</a>.</div></div>
 
-<script>
+<script type="module">
+import { ApiError, DeclipClient, readBank, saveBank } from "./src/clipped-api.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
    Fill these in once the site is live on its own domain and the AdSense account
@@ -591,8 +598,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   function line() { return LINE[plug.getAttribute('data-mode')] || LINE.light; }
 
   // ---------------------------------------------------------------- source
-  // Default reading: a sine whose phase advances with depth. Replaced by real
-  // samples the moment a file is dropped in.
+  // Decorative surface; restoration progress drives its existing animation.
   function synth() {
     var s = [];
     for (var r = 0; r < ROWS; r++) {
@@ -601,141 +607,6 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
         var u = i / COLS;
         row.push(0.82 * Math.sin(2 * Math.PI * u + 4.1 * t)
                + 0.18 * Math.sin(2 * Math.PI * 3 * u - 2.7 * t));
-      }
-      s.push(row);
-    }
-    return s;
-  }
-
-  // Cut ROWS consecutive slices out of the busiest stretch of the file and
-  // normalise them, so the surface is the listener's own material.
-  // The stretch the graphic is showing. Held so the restored redraw uses the
-  // same window as the clipped one — re-picking it would make the surface jump
-  // to a different part of the file at the exact moment it should be showing
-  // the same part repaired.
-  var shownWindow = -1;
-
-
-  // Round off whatever plateaus are left in the surface, so the graphic always
-  // lands on a restored shape.
-  //
-  // This is the picture only. It runs on the 34x113 display surface, never on
-  // the audio: lastBlob is written from chans before this is called, so the WAV
-  // anyone downloads is exactly what declipBlock produced and nothing here can
-  // reach it. The honest numbers live elsewhere on the page — the samples
-  // rebuilt count, and the file itself.
-  //
-  // declipBlock clamps its rebuilt peaks at peak * 1.9, which on a long flat
-  // run returns a higher plateau rather than a peak. The same cubic shape is
-  // applied here without that clamp, so a run comes back as an arc. Taller runs
-  // get taller arcs, which keeps the field looking like the material rather
-  // than like a row of identical bumps.
-  function roundPeaks(surf) {
-    // Shape, not level — the same mistake the detector used to make. Keying
-    // this off the surface's own maximum meant that a window containing one
-    // louder peak left every plateau below it untouched, which is why a badly
-    // clipped file could still come out of here looking square.
-    //
-    // A plateau is a run of columns that barely move, wherever it sits in the
-    // range. Each one is replaced by an arc that rises with the width of the
-    // run, so a long flat stretch comes back as a tall peak and a short one
-    // stays modest, and the field keeps the character of the material instead
-    // of turning into a row of identical bumps.
-    var EPS = 0.03;     // a plateau across a 113-column row
-    var FLOOR = 0.05;   // leave the zero crossings alone
-    var r, i, top = 0;
-
-    for (r = 0; r < surf.length; r++)
-      for (i = 0; i < surf[r].length; i++) {
-        var a0 = Math.abs(surf[r][i]);
-        if (a0 > top) top = a0;
-      }
-    if (top < 1e-6) return surf;
-
-    for (r = 0; r < surf.length; r++) {
-      var row = surf[r], n = row.length;
-      i = 0;
-      while (i < n) {
-        var v = row[i];
-        if (Math.abs(v) < FLOOR) { i++; continue; }
-        var j2 = i + 1;
-        while (j2 < n && Math.abs(row[j2] - v) <= EPS) j2++;
-        var len = j2 - i;
-        if (len >= 2) {
-          var sign = v > 0 ? 1 : -1, lvl = sign > 0 ? v : -v;
-          var rise = lvl * Math.min(0.75, 0.14 + 0.09 * len);
-          for (var k = 0; k < len; k++) {
-            var t = (k + 1) / (len + 1);
-            row[i + k] = sign * (lvl + rise * Math.sin(Math.PI * t));
-          }
-          i = j2;
-        } else i++;
-      }
-    }
-
-    // back inside the ceiling, or drawTable would clamp the new arcs flat again
-    var hi = 0;
-    for (r = 0; r < surf.length; r++)
-      for (i = 0; i < surf[r].length; i++) {
-        var b = Math.abs(surf[r][i]);
-        if (b > hi) hi = b;
-      }
-    if (hi > 1) for (r = 0; r < surf.length; r++)
-      for (i = 0; i < surf[r].length; i++) surf[r][i] /= hi;
-    return surf;
-  }
-
-  function fromAudio(buf) {
-    return fromPCM(buf.getChannelData(0), buf.sampleRate, -1);
-  }
-
-  function fromPCM(pcm, sampleRate, reuse) {
-    var buf = { sampleRate: sampleRate };
-    var slice = Math.max(64, Math.round(buf.sampleRate * 0.012));  // 12 ms per slice
-    var span = slice * ROWS;
-    if (pcm.length < span) span = pcm.length, slice = Math.floor(span / ROWS);
-
-    // Score every candidate window by the GEOMETRIC mean of its slices' RMS.
-    // A plain sum picks the loudest window even when half of it is silence;
-    // a geometric mean collapses as soon as one slice is near-silent, so the
-    // window that wins is loud the whole way across.
-    var step = Math.max(1, Math.floor(slice / 24));
-    var nSlices = Math.floor(pcm.length / slice);
-    var best = 0;
-    if (nSlices >= ROWS) {
-      var logs = new Float64Array(nSlices + 1);
-      for (var si = 0; si < nSlices; si++) {
-        var acc = 0, n = 0;
-        for (var k = si * slice; k < (si + 1) * slice; k += step) { acc += pcm[k] * pcm[k]; n++; }
-        logs[si + 1] = logs[si] + Math.log(Math.sqrt(acc / Math.max(1, n)) + 1e-6);
-      }
-      var bestScore = -Infinity;
-      for (var j = 0; j + ROWS <= nSlices; j++) {
-        var sc = logs[j + ROWS] - logs[j];
-        if (sc > bestScore) { bestScore = sc; best = j * slice; }
-      }
-    }
-    if (reuse >= 0 && reuse + span <= pcm.length) best = reuse;
-    shownWindow = best;
-
-    var peak = 1e-6;
-    for (var k2 = best; k2 < best + span; k2++) {
-      var a = Math.abs(pcm[k2]);
-      if (a > peak) peak = a;
-    }
-
-    // peak-decimate each column, the way a waveform view is drawn, so fast
-    // material does not alias into noise
-    var s = [], bin = Math.max(1, Math.floor(slice / COLS));
-    for (var r = 0; r < ROWS; r++) {
-      var row = [], base = best + r * slice;
-      for (var i = 0; i <= COLS; i++) {
-        var from = base + Math.floor((i / COLS) * (slice - bin)), hi = 0;
-        for (var q = 0; q < bin; q++) {
-          var v = pcm[from + q] || 0;
-          if (Math.abs(v) > Math.abs(hi)) hi = v;
-        }
-        row.push(hi / peak);
       }
       s.push(row);
     }
@@ -944,70 +815,116 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   var afterEl = document.getElementById('after');
   function dismissCall() { }   // the prompt lives above the graphic and stays there
 
-  var DAILY = 20 * 60;
-  var usedToday = 0;
-  var bank = [];
-  var busy = false;
-  var lastBlob = null, lastName = '';
+  var bank = readBank();
+  var busy = false, lastRow = bank[0] || null;
+  var limits = null;
+  var retryBtn = document.getElementById('retry');
+  var discardBtn = document.getElementById('discard');
+  statusEl.setAttribute('aria-live', 'polite');
+  pfill.parentElement.setAttribute('role', 'progressbar');
+  pfill.parentElement.setAttribute('aria-label', 'Render');
 
   function clock(sec) {
     sec = Math.max(0, Math.round(sec));
     var m = Math.floor(sec / 60), s = sec % 60;
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
-  // midnight where the reader is, not where the server is
-  function paintReset() {
-    var el = document.getElementById('reset');
-    if (!el) return;
+  function paintQuota(data) {
+    limits = data.limits;
+    var used = limits.device_seconds_reserved_or_used, daily = limits.device_seconds_per_day;
+    leftEl.textContent = clock(Math.max(0, daily - used)) + ' left';
+    usedEl.textContent = clock(used) + ' of ' + clock(daily) + ' used';
+    qfill.style.width = Math.min(100, 100 * used / daily) + '%';
+    // Keep the existing sentence, but calculate the actual UTC reset time.
     var now = new Date();
-    var next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-    var mins = Math.max(0, Math.round((next - now) / 60000));
-    var h = Math.floor(mins / 60), m = mins % 60;
-    var zone = '';
-    try {
-      var parts = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' }).formatToParts(now);
-      for (var i = 0; i < parts.length; i++) if (parts[i].type === 'timeZoneName') zone = ' ' + parts[i].value;
-    } catch (e) { zone = ''; }
-    el.textContent = 'Limits reset tomorrow at midnight' + zone + ', in ' + h + 'h ' + m + 'm.';
+    var next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    var mins = Math.max(0, Math.ceil((next - now) / 60000));
+    document.getElementById('reset').textContent = 'Limits reset at '
+      + next.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })
+      + ', in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm.';
+    prepareVerification(data).catch(function () { /* Retry when a file is selected. */ });
   }
-  setInterval(paintReset, 60000);
+  function say(t, bad) { statusEl.textContent = t; statusEl.className = bad ? 'err' : ''; }
 
-  function paintQuota() {
-    leftEl.textContent = clock(Math.max(0, DAILY - usedToday)) + ' left';
-    usedEl.textContent = clock(usedToday) + ' of ' + clock(DAILY) + ' used';
-    qfill.style.width = (100 * usedToday / DAILY) + '%';
-  }
-  function say(t, bad) {
-    statusEl.textContent = t;
-    statusEl.className = bad ? 'err' : '';
-  }
-  // The graphic and the bar are the same number. A short file restores faster
-  // than the eye can follow, so the shown value is also paced by a floor time:
-  // the peaks come back over MIN_MS at least, and the bar tracks them exactly.
-  var MIN_MS = 2600;
-  var target = 0, shown = 0, runAt = 0, ticking = false, finish = null;
-
-  function paint(v) {
-    restore = Math.max(0, Math.min(1, v));
-    pctEl.textContent = Math.round(restore * 100) + '%';
-    pfill.style.width = (restore * 100) + '%';
-    drawTable();
-  }
-  function progress(p) {          // set where the render has actually got to
-    target = Math.max(0, Math.min(1, p));
+  var shown = 0, target = 0, ticking = false;
+  function animateRestore(value) {
+    target = value;
     if (!ticking) { ticking = true; requestAnimationFrame(tick); }
   }
   function tick() {
-    var byTime = runAt ? (performance.now() - runAt) / MIN_MS : 1;
-    var want = Math.min(target, byTime);
-    shown += (want - shown) * 0.16;
-    if (want >= 0.9999 && shown > 0.995) shown = 1;
-    paint(shown);
-    if (shown < 0.9999) { requestAnimationFrame(tick); return; }
-    ticking = false;
-    if (finish) { var f = finish; finish = null; f(); }
+    shown += (target - shown) * 0.16;
+    if (Math.abs(target - shown) < 0.001) shown = target;
+    restore = shown; drawTable();
+    if (shown !== target) requestAnimationFrame(tick); else ticking = false;
   }
-  function resetProgress() { target = 0; shown = 0; runAt = 0; paint(0); }
+  function renderState(view) {
+    busy = view.busy && !view.needsFile;
+    fileIn.disabled = busy;
+    scope.setAttribute('aria-disabled', String(busy));
+    retryBtn.hidden = !view.canRetry;
+    discardBtn.hidden = !view.canDiscard;
+    say(view.text + (view.warning && !view.error ? ' · ' + view.warning : ''), view.error);
+    var value = view.value;
+    pctEl.textContent = value == null ? '—' : Math.round(value * 100) + '%';
+    pfill.style.width = value == null ? '0%' : (value * 100) + '%';
+    pfill.parentElement.setAttribute('aria-valuetext', view.text);
+    if (value == null) pfill.parentElement.removeAttribute('aria-valuenow');
+    else pfill.parentElement.setAttribute('aria-valuenow', String(Math.round(value * 100)));
+    if (view.phase === 'processing' || view.phase === 'completed') animateRestore(value == null ? shown : value);
+    dlBtn.disabled = busy || !lastRow;
+  }
+
+  // Only verification requiring interaction occupies space in the existing card.
+  var widget, widgetPromise, challengeToken = '', tokenWaiter;
+  function prepareVerification(data) {
+    if (data.local) return Promise.resolve();
+    if (widgetPromise) return widgetPromise;
+    widgetPromise = new Promise(function (resolve, reject) {
+      function render() {
+        try {
+          widget = window.turnstile.render('#verification', {
+            sitekey: data.turnstile_site_key, action: 'create-job', appearance: 'interaction-only',
+            theme: 'auto', size: 'flexible',
+            callback: function (token) { challengeToken = token; if (tokenWaiter) tokenWaiter.resolve(token); },
+            'expired-callback': function () { challengeToken = ''; },
+            'error-callback': function () { challengeToken = ''; if (tokenWaiter) tokenWaiter.reject(new Error('Verification failed. Please retry.')); return true; }
+          });
+          resolve();
+        } catch (error) { reject(error); }
+      }
+      if (window.turnstile) { render(); return; }
+      var script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.onload = render;
+      script.onerror = function () { script.remove(); reject(new Error('Verification could not load. Please retry.')); };
+      document.head.appendChild(script);
+    }).catch(function (error) { widgetPromise = null; throw error; });
+    return widgetPromise;
+  }
+  async function getToken() {
+    await prepareVerification(client.session);
+    if (!challengeToken) {
+      say('Verifying');
+      await new Promise(function (resolve, reject) {
+        var timer = setTimeout(function () { tokenWaiter.reject(new Error('Verification timed out. Please retry.')); }, 180000);
+        tokenWaiter = { resolve: function (token) { clearTimeout(timer); tokenWaiter = null; resolve(token); },
+          reject: function (error) { clearTimeout(timer); tokenWaiter = null; reject(error); } };
+        window.turnstile.reset(widget);
+      });
+    }
+    var token = challengeToken; challengeToken = ''; return token;
+  }
+
+  var client = new DeclipClient({ token: getToken, onChange: renderState, onQuota: paintQuota,
+    onComplete: function (row) {
+      bank = bank.filter(function (item) { return item.id !== row.id; });
+      bank.unshift(row); bank = bank.slice(0, 10);
+      if (playing && !bank.includes(playing)) stopPlayback(true);
+      saveBank(bank); lastRow = row; paintBank(); flare();
+    }
+  });
+  retryBtn.onclick = function () { client.retry(); };
+  discardBtn.onclick = function () { client.abandon(); };
 
   // when a file lands, the surface flares once and settles back
   function flare() {
@@ -1015,407 +932,138 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     panel.classList.add('lit');
     (function step() {
       var k = (performance.now() - t0) / LEN;
-      if (k >= 1) {
-        FLASH = 0;
-        panel.classList.remove('lit');
-        drawTable();
-        return;
-      }
-      FLASH = Math.sin(k * Math.PI);          // up and back down
-      drawTable();
-      requestAnimationFrame(step);
+      if (k >= 1) { FLASH = 0; panel.classList.remove('lit'); drawTable(); return; }
+      FLASH = Math.sin(k * Math.PI); drawTable(); requestAnimationFrame(step);
     })();
   }
 
-  // ------------------------------------------------------------ restoring
-  function channelPeak(d) {
-    var peak = 0;
-    for (var i = 0; i < d.length; i++) { var a = d[i] < 0 ? -d[i] : d[i]; if (a > peak) peak = a; }
-    return peak;
-  }
-  // A clipped run is a stretch pinned at the ceiling. Replace each one with a
-  // cubic through the samples on either side, which arcs back over the ceiling
-  // the way the waveform would have if it had not run out of headroom. Done a
-  // block at a time so a long file morphs the graphic smoothly.
-  // Clipping is a SHAPE, not a level. The old test was "within 1.5% of the
-  // file's loudest sample", which got it wrong in both directions: a slow sine
-  // sits near its own peak for several samples and was being "repaired", while
-  // a file clipped at -6 dB with one louder transient somewhere else had its
-  // threshold dragged up above the flat tops and came back "No clipping found".
-  //
-  // What actually marks a clipped sample is that the waveform stops moving:
-  // a run of consecutive samples holding the same value. Clean material does
-  // not do that for long — measured across test signals, honest audio tops out
-  // around a 10-sample run and a slow sine at 3, while clipped material throws
-  // hundreds of runs past 32. Eight is comfortably between the two.
-  //
-  // Nothing here looks at the file's peak, so the level a file was clipped at,
-  // and whatever was done to it afterwards, no longer matter.
-  var FLAT_EPS = 2 / 32768;    // two 16-bit steps: a plateau, allowing for dither
-  var FLAT_MIN = 8;            // shorter runs than this occur in clean audio
-  var FLAT_FLOOR = 0.02;       // digital silence is flat too, and is not clipping
-
-  function declipBlock(d, _peakUnused, from, to) {
-    var n = d.length, fixed = 0;
-    var i = from < 2 ? 2 : from;
-    while (i < to && i < n - 2) {
-      var v = d[i];
-      if ((v < 0 ? -v : v) < FLAT_FLOOR) { i++; continue; }
-
-      var j = i + 1;
-      while (j < n && Math.abs(d[j] - v) <= FLAT_EPS) j++;
-      var len = j - i;
-
-      if (len >= FLAT_MIN && i >= 2 && j < n - 2) {
-        // the run is rebuilt against the level it sat at, not the file's peak
-        var sign = v > 0 ? 1 : -1, lvl = sign > 0 ? v : -v;
-        var p0 = d[i - 1], p1 = d[j];
-        var m0 = (d[i - 1] - d[i - 2]) * len;
-        var m1 = (d[j + 1] - d[j]) * len;
-        for (var k = 0; k < len; k++) {
-          var t = (k + 1) / (len + 1), t2 = t * t, t3 = t2 * t;
-          var y = (2 * t3 - 3 * t2 + 1) * p0 + (t3 - 2 * t2 + t) * m0
-                + (-2 * t3 + 3 * t2) * p1 + (t3 - t2) * m1;
-          if (sign > 0 && y < lvl) y = lvl;
-          if (sign < 0 && y > -lvl) y = -lvl;
-          if (y > lvl * 1.9) y = lvl * 1.9;
-          if (y < -lvl * 1.9) y = -lvl * 1.9;
-          d[i + k] = y;
-        }
-        fixed += len;
-        i = j;
-      } else {
-        i = len > 1 ? j : i + 1;
-      }
-    }
-    return fixed;
-  }
-
-  function normalise(chans) {
-    var peak = 0, c, i;
-    for (c = 0; c < chans.length; c++) {
-      var d = chans[c];
-      for (i = 0; i < d.length; i++) { var a = d[i] < 0 ? -d[i] : d[i]; if (a > peak) peak = a; }
-    }
-    if (peak <= 0.995) return;
-    var g = 0.995 / peak;
-    for (c = 0; c < chans.length; c++) {
-      var e = chans[c];
-      for (i = 0; i < e.length; i++) e[i] *= g;
-    }
-  }
-
-  // 24 bit WAV, so nothing is thrown away on the way out
-  function wav(chans, rate) {
-    var n = chans[0].length, ch = chans.length, bytes = n * ch * 3;
-    var b = new ArrayBuffer(44 + bytes), v = new DataView(b), o = 0;
-    function str(s) { for (var i = 0; i < s.length; i++) v.setUint8(o++, s.charCodeAt(i)); }
-    function u32(x) { v.setUint32(o, x, true); o += 4; }
-    function u16(x) { v.setUint16(o, x, true); o += 2; }
-    str('RIFF'); u32(36 + bytes); str('WAVE');
-    str('fmt '); u32(16); u16(1); u16(ch); u32(rate);
-    u32(rate * ch * 3); u16(ch * 3); u16(24);
-    str('data'); u32(bytes);
-    for (var i = 0; i < n; i++) {
-      for (var c = 0; c < ch; c++) {
-        var s = chans[c][i];
-        if (s > 1) s = 1; if (s < -1) s = -1;
-        var q = Math.round(s * 8388607);
-        v.setUint8(o++, q & 255);
-        v.setUint8(o++, (q >> 8) & 255);
-        v.setUint8(o++, (q >> 16) & 255);
-      }
-    }
-    return new Blob([b], { type: 'audio/wav' });
-  }
-
-  // ------------------------------------------------------------ the run
-  function run(file, buf) {
-    busy = true;
-    dlBtn.disabled = true;
-    lastBlob = null;
-    surface = fromAudio(buf);      // the loudest unbroken stretch of their file
-    yaw = YAW0; pitch = PITCH0;
-    resetProgress();
-    runAt = performance.now();
-    say('Restoring ' + file.name);
-
-    var chans = [];
-    for (var c = 0; c < buf.numberOfChannels; c++) chans.push(buf.getChannelData(c).slice());
-    var peaks = chans.map(channelPeak);   // kept for normalise, not for detection
-    var len = chans[0].length, total = len * chans.length;
-    var BLOCK = 220000;
-    var ch = 0, at = 0, walked = 0, fixed = 0;
-
-    function step() {
-      if (ch >= chans.length) {
-        normalise(chans);
-        // Redraw the surface from the audio that was just repaired, not the
-        // file that came in. The graphic was built once from the input and
-        // never rebuilt, so what it showed was always the clipped shape with
-        // a rising ceiling over it. That reads as restoration when the flat
-        // tops sit below the ceiling, but on heavily clipped material the
-        // plateau IS the data: there is nothing above it for a ceiling to
-        // reveal, so it stayed flat however far the bar ran. Reading the
-        // repaired samples shows the peaks declipBlock actually rebuilt.
-        surface = roundPeaks(fromPCM(chans[0], buf.sampleRate, shownWindow));
-        lastBlob = wav(chans, buf.sampleRate);
-        lastName = file.name.replace(/\.[^.]+$/, '') + ' restored.wav';
-        // the file is ready, but nothing lands until the peaks have finished
-        // coming back on screen, so the two always agree
-        finish = function () {
-          dlBtn.disabled = false;
-          usedToday += buf.duration;
-          paintQuota();
-          addToBank(file.name, buf.duration, lastBlob, lastName);
-          say('Done');
-          busy = false;
-          flare();
-        };
-        progress(1);
-        return;
-      }
-      var end = Math.min(len, at + BLOCK);
-      fixed += declipBlock(chans[ch], peaks[ch], at, end);
-      walked += end - at;
-      at = end;
-      if (at >= len) { ch++; at = 0; }
-      progress(walked / total * 0.98);
-      setTimeout(step, 0);
-    }
-    setTimeout(step, 60);
-  }
-
-  var BANKMAX = 10;                 // the bank holds ten, then the oldest drops off
-  function addToBank(name, dur, blob, outName) {
-    bank.unshift({ name: name, dur: dur, url: URL.createObjectURL(blob), out: outName, blob: blob });
-    while (bank.length > BANKMAX) URL.revokeObjectURL(bank.pop().url);
-    paintBank();
-  }
-  // ------------------------------------------------------------ playback
-  // Web Audio rather than an <audio> element. A cross-origin frame without
-  // allow="autoplay" refuses element playback even after a click, and some
-  // builds will not decode 24 bit PCM WAV through the media pipeline at all.
-  // decodeAudioData handles both, and the context is shared with the renderer
-  // because browsers cap how many AudioContexts a page may hold.
-  var actx = null;
-  function audioCtx() {
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    if (!actx) { try { actx = new AC(); } catch (e) { return null; } }
-    if (actx.state === 'suspended' && actx.resume) actx.resume();
-    return actx;
-  }
-
-  var playing = null;        // the row that owns the transport
-  var node = null;           // the running BufferSource
-  var startedAt = 0, startOffset = 0, rafPlay = 0;
-
-  var ICON_PLAY = '<svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" aria-hidden="true">'
-                + '<path d="M0 0 L9 5 L0 10 Z"/></svg>';
-  var ICON_STOP = '<svg width="8" height="10" viewBox="0 0 8 10" fill="currentColor" aria-hidden="true">'
-                + '<rect x="0" y="0" width="3" height="10"/><rect x="5" y="0" width="3" height="10"/></svg>';
-
-  function rowDur(row) { return (row._buf && row._buf.duration) || row.dur || 1; }
-  function headAt() {
-    if (!playing) return 0;
-    if (!node) return startOffset;
-    var c = audioCtx();
-    return startOffset + (c ? c.currentTime - startedAt : 0);
-  }
+  // One streaming media element; never decode a potentially two-hour WAV into
+  // an AudioBuffer. Fresh owner-authorized grants are obtained for each play.
+  var playing = null, media = new Audio(), playRequest = 0, rafPlay = 0;
+  media.preload = 'none';
+  var ICON_PLAY = '<svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" aria-hidden="true"><path d="M0 0 L9 5 L0 10 Z"/></svg>';
+  var ICON_STOP = '<svg width="8" height="10" viewBox="0 0 8 10" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="3" height="10"/><rect x="5" y="0" width="3" height="10"/></svg>';
   function paintPlayhead() {
-    if (!playing || !playing._fill) return;
-    playing._fill.style.width = Math.max(0, Math.min(1, headAt() / rowDur(playing))) * 100 + '%';
+    if (playing && playing._fill) {
+      playing._fill.style.width = Math.min(100, 100 * media.currentTime / (playing.dur || 1)) + '%';
+      playing._fill.parentElement.setAttribute('aria-valuenow', String(Math.round(media.currentTime)));
+    }
   }
-  function tickPlay() {
-    paintPlayhead();
-    rafPlay = node ? requestAnimationFrame(tickPlay) : 0;
-  }
+  function tickPlay() { paintPlayhead(); rafPlay = !media.paused ? requestAnimationFrame(tickPlay) : 0; }
   function showPaused(row) {
-    if (row && row._btn) { row._btn.innerHTML = ICON_PLAY; row._btn.classList.remove('on'); }
-  }
-  function dropNode() {
-    if (!node) return;
-    node.cancelled = true;              // its onended arrives a tick late, ignore it
-    try { node.stop(); } catch (e) {}
-    node.disconnect();
-    node = null;
+    if (row && row._btn) { row._btn.innerHTML = ICON_PLAY; row._btn.classList.remove('on'); row._btn.setAttribute('aria-label', 'play ' + row.name); }
   }
   function stopPlayback(clearFill) {
-    dropNode();
-    if (rafPlay) { cancelAnimationFrame(rafPlay); rafPlay = 0; }
+    playRequest++;
+    media.pause();
     if (playing) {
+      playing._offset = clearFill ? 0 : media.currentTime;
       showPaused(playing);
       if (clearFill && playing._fill) playing._fill.style.width = '0%';
     }
-    playing = null;
+    if (rafPlay) cancelAnimationFrame(rafPlay);
+    rafPlay = 0; playing = null;
+    media.removeAttribute('src'); media.load();
   }
-
-  // decode on demand and keep the last two, so a long file is not held twice
-  function withBuffer(row, then) {
-    if (row._buf) { then(row._buf); return; }
-    var ctx = audioCtx();
-    if (!ctx) { say('This browser will not play audio back', true); return; }
-    var fr = new FileReader();
-    fr.onload = function () {
-      ctx.decodeAudioData(fr.result, function (buf) {
-        var kept = 0;
-        for (var i = 0; i < bank.length; i++) {
-          if (bank[i]._buf && bank[i] !== row && ++kept > 1) bank[i]._buf = null;
-        }
-        row._buf = buf;
-        then(buf);
-      }, function () { say('That render will not play back here', true); });
-    };
-    fr.readAsArrayBuffer(row.blob);
+  function rowError(row, error) {
+    if ([401, 404, 410].includes(error.status)) { row._unavailable = true; paintBank(); }
+    say(error.message || 'That render will not play back here. Download WAV is still available.', true);
   }
-
-  function playFrom(row, offset) {
-    var ctx = audioCtx();
-    if (!ctx || !row._buf) return;
-    dropNode();
-    node = ctx.createBufferSource();
-    node.buffer = row._buf;
-    node.connect(ctx.destination);
-    node.onended = function () {
-      if (this.cancelled) return;
-      if (playing === row && playing._fill) playing._fill.style.width = '100%';
-      node = null;
-      showPaused(row);
-      playing = null;
-      if (rafPlay) { cancelAnimationFrame(rafPlay); rafPlay = 0; }
-    };
-    startOffset = Math.max(0, Math.min(offset, row._buf.duration - 0.01));
-    node.start(0, startOffset);
-    startedAt = ctx.currentTime;
-    playing = row;
-    if (row._btn) { row._btn.innerHTML = ICON_STOP; row._btn.classList.add('on'); }
-    if (!rafPlay) rafPlay = requestAnimationFrame(tickPlay);
+  async function playFrom(row, offset) {
+    stopPlayback(playing !== row);
+    var request = playRequest;
+    playing = row; row._offset = offset;
+    try {
+      if (row.expires_at * 1000 <= Date.now()) throw new ApiError('This file has expired', 410);
+      var grant = await client.download(row.id);
+      if (request !== playRequest || !bank.includes(row)) return;
+      media.src = grant.url;
+      media.onloadedmetadata = function () {
+        if (request === playRequest && offset > 0) media.currentTime = Math.min(offset, Math.max(0, media.duration - 0.01));
+      };
+      await media.play();
+      if (request !== playRequest) return;
+      row._btn.innerHTML = ICON_STOP; row._btn.classList.add('on'); row._btn.setAttribute('aria-label', 'pause ' + row.name);
+      if (!rafPlay) rafPlay = requestAnimationFrame(tickPlay);
+    } catch (error) { if (request === playRequest) { stopPlayback(false); rowError(row, error); } }
   }
-
+  media.onended = function () { var row = playing; stopPlayback(true); if (row?._fill) row._fill.style.width = '100%'; };
+  media.onerror = function () {
+    if (playing && media.error && media.getAttribute('src')) { var row = playing; stopPlayback(false); rowError(row, new Error('Playback unavailable. Try again or download the WAV.')); }
+  };
+  async function downloadRow(row) {
+    try {
+      if (row.expires_at * 1000 <= Date.now()) throw new ApiError('This file has expired', 410);
+      var grant = await client.download(row.id);
+      var a = document.createElement('a'); a.href = grant.url; a.download = row.out; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    } catch (error) { rowError(row, error); }
+  }
   function paintBank() {
     if (!bank.length) { bankEl.innerHTML = '<div class="empty">Nothing Rendered Yet</div>'; return; }
     bankEl.innerHTML = '';
-    bank.forEach(function (row, idx) {
-      var wrap = document.createElement('div');
-      wrap.className = 'item';
-
-      var nm = document.createElement('div');
-      nm.className = 'nm';
-      nm.textContent = row.name;
-
-      var deck = document.createElement('div');
-      deck.className = 'deck';
-      var btn = document.createElement('button');
-      btn.className = 'play';
-      btn.type = 'button';
-      btn.innerHTML = ICON_PLAY;
+    bank.forEach(function (row) {
+      var wrap = document.createElement('div'); wrap.className = 'item';
+      var nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = row.name;
+      var deck = document.createElement('div'); deck.className = 'deck';
+      var btn = document.createElement('button'); btn.className = 'play'; btn.type = 'button'; btn.innerHTML = ICON_PLAY;
       btn.setAttribute('aria-label', 'play ' + row.name);
-      var ph = document.createElement('div');
-      ph.className = 'ph';
-      ph.title = 'click to scrub';
-      var at = document.createElement('div');
-      at.className = 'at';
-      ph.appendChild(at);
-      deck.appendChild(btn); deck.appendChild(ph);
-
+      var ph = document.createElement('div'); ph.className = 'ph'; ph.title = 'click to scrub';
+      ph.tabIndex = 0; ph.setAttribute('role', 'slider'); ph.setAttribute('aria-label', 'seek ' + row.name);
+      ph.setAttribute('aria-valuemin', '0'); ph.setAttribute('aria-valuemax', String(row.dur)); ph.setAttribute('aria-valuenow', '0');
+      var at = document.createElement('div'); at.className = 'at'; ph.appendChild(at); deck.appendChild(btn); deck.appendChild(ph);
       row._btn = btn; row._fill = at;
-
+      var unavailable = row._unavailable || row.expires_at * 1000 <= Date.now();
+      btn.disabled = unavailable;
       btn.onclick = function () {
-        if (playing === row && node) { stopPlayback(false); return; }   // pressing stop
-        var from = (playing === row) ? headAt() : 0;
-        if (playing && playing !== row) stopPlayback(true);
-        withBuffer(row, function () { playFrom(row, from); });
+        if (playing === row && !media.paused) { stopPlayback(false); return; }
+        playFrom(row, row._offset || 0);
       };
-      // press anywhere in the rail's band and drag: the playhead follows the
-      // pointer and only commits when it is let go, so scrubbing is forgiving
       var scrubbing = false, scrubAt = 0;
-      function ratioAt(ev) {
-        var b = ph.getBoundingClientRect();
-        return Math.max(0, Math.min(1, (ev.clientX - b.left) / b.width));
-      }
+      function ratioAt(ev) { var b = ph.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - b.left) / b.width)); }
       ph.addEventListener('pointerdown', function (ev) {
-        ev.preventDefault();
-        scrubbing = true;
-        scrubAt = ratioAt(ev);
-        at.style.width = scrubAt * 100 + '%';
-        ph.setPointerCapture(ev.pointerId);
+        if (unavailable) return; ev.preventDefault(); scrubbing = true; scrubAt = ratioAt(ev);
+        at.style.width = scrubAt * 100 + '%'; ph.setPointerCapture(ev.pointerId);
       });
-      ph.addEventListener('pointermove', function (ev) {
-        if (!scrubbing) return;
-        scrubAt = ratioAt(ev);
-        at.style.width = scrubAt * 100 + '%';
-      });
+      ph.addEventListener('pointermove', function (ev) { if (scrubbing) { scrubAt = ratioAt(ev); at.style.width = scrubAt * 100 + '%'; } });
       ph.addEventListener('pointerup', function (ev) {
-        if (!scrubbing) return;
-        scrubbing = false;
+        if (!scrubbing) return; scrubbing = false;
         try { ph.releasePointerCapture(ev.pointerId); } catch (e) {}
-        if (playing && playing !== row) stopPlayback(true);
-        withBuffer(row, function (buf) { playFrom(row, scrubAt * buf.duration); });
+        playFrom(row, scrubAt * row.dur);
       });
       ph.addEventListener('pointercancel', function () { scrubbing = false; });
-
-      var get = document.createElement('a');
-      get.className = 'dl';
-      get.href = row.url;
-      get.download = row.out;
-      get.textContent = 'WAV ' + clock(row.dur);
-      var rm = document.createElement('button');
-      rm.className = 'rm';
-      rm.type = 'button';
-      rm.setAttribute('aria-label', 'remove ' + row.name);
-      rm.textContent = '\u00d7';
+      ph.addEventListener('keydown', function (ev) {
+        if (unavailable || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+        ev.preventDefault();
+        var offset = playing === row ? media.currentTime : (row._offset || 0);
+        offset = ev.key === 'Home' ? 0 : ev.key === 'End' ? row.dur - 0.01 : offset + (ev.key === 'ArrowRight' ? 5 : -5);
+        playFrom(row, Math.max(0, Math.min(row.dur - 0.01, offset)));
+      });
+      var get = document.createElement('a'); get.className = 'dl'; get.href = '#';
+      get.textContent = unavailable ? 'Expired' : 'WAV ' + clock(row.dur);
+      get.setAttribute('aria-disabled', String(unavailable));
+      get.onclick = function (ev) { ev.preventDefault(); if (!unavailable) downloadRow(row); };
+      var rm = document.createElement('button'); rm.className = 'rm'; rm.type = 'button';
+      rm.setAttribute('aria-label', 'remove ' + row.name); rm.textContent = '\u00d7';
       rm.onclick = function () {
-        if (playing === row) stopPlayback(false);
-        URL.revokeObjectURL(row.url);
-        bank.splice(idx, 1);
+        if (playing === row) stopPlayback(true);
+        bank = bank.filter(function (item) { return item !== row; }); saveBank(bank);
+        if (lastRow === row) { lastRow = bank[0] || null; dlBtn.disabled = busy || !lastRow; }
         paintBank();
       };
-
-      wrap.appendChild(nm); wrap.appendChild(deck); wrap.appendChild(get); wrap.appendChild(rm);
-      bankEl.appendChild(wrap);
-
-      // a repaint must not lose the clip that is already running
-      if (playing === row) {
-        btn.innerHTML = node ? ICON_STOP : ICON_PLAY;
-        if (node) btn.classList.add('on');
-        paintPlayhead();
-      }
+      wrap.appendChild(nm); wrap.appendChild(deck); wrap.appendChild(get); wrap.appendChild(rm); bankEl.appendChild(wrap);
+      if (playing === row) { if (!media.paused) { btn.innerHTML = ICON_STOP; btn.classList.add('on'); } paintPlayhead(); }
     });
   }
-
   function take(file) {
     if (!file || busy) return;
-    dismissCall();
-    var ac = audioCtx();
-    if (!ac) { say('This browser cannot decode audio', true); return; }
-    say('Reading the file');
-    var fr = new FileReader();
-    fr.onload = function () {
-      ac.decodeAudioData(fr.result, function (buf) {
-        if (usedToday + buf.duration > DAILY) {
-          say('That is ' + clock(buf.duration) + ' and only ' + clock(DAILY - usedToday) + ' is left today', true);
-          return;
-        }
-        run(file, buf);
-      }, function () {
-        var ext = (file.name.split('.').pop() || '').toLowerCase();
-        say('This browser cannot decode .' + ext + ' — try WAV, FLAC, MP3 or M4A', true);
-      });
-    };
-    fr.readAsArrayBuffer(file);
+    dismissCall(); yaw = YAW0; pitch = PITCH0; animateRestore(0);
+    client.submit(file);
   }
 
   // ------------------------------------------------------------ wiring
   fileIn.addEventListener('change', function () { take(fileIn.files[0]); fileIn.value = ''; });
-  dlBtn.addEventListener('click', function () {
-    if (!lastBlob) return;
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(lastBlob);
-    a.download = lastName;
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-  });
+  dlBtn.addEventListener('click', function () { if (lastRow) downloadRow(lastRow); });
+  window.addEventListener('pagehide', function () { stopPlayback(false); });
 
   ['dragenter', 'dragover'].forEach(function (e) {
     document.addEventListener(e, function (ev) {
@@ -1661,9 +1309,10 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   restore = 0;
   requestAnimationFrame(swayLoop);
   shown = 0;
-  paintQuota();
-  paintReset();
-  progress(0);
+  paintBank();
+  dlBtn.disabled = !lastRow;
+  client.initialize();
+  setInterval(function () { client.refreshQuota().catch(function () {}); }, 60000);
 })();
 </script>
 </body>
