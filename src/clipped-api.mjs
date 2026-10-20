@@ -99,7 +99,7 @@ export class DeclipClient {
       if (this.active) {
         if (this.active.id) await this.drive();
         else this.needFile();
-      } else this.emit({ text: 'Waiting for a file', value: 0 });
+      } else if (!this.running) this.emit({ text: 'Waiting for a file', value: 0 });
     } catch (error) { this.problem(error); }
   }
   needFile() {
