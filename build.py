@@ -41,7 +41,7 @@ TOOLS = [
                 "summary": "Clipped Pro includes the plug-in and the standalone app. The plug-in runs inside a "
                            "DAW or NLE and the standalone app exists right on your computer. You will get both "
                            "when you buy Clipped Pro.",
-                "buttons": [("Buy now", "#")],
+                "buy": "clipped-pro",
                 "specs": [("included", "Plug-in and Standalone app"),
                           ("runs in", "Plug-in: Any digital audio workstation (DAW) or video editor (NLE) "
                                       "that takes plug-ins<br>"
@@ -1404,10 +1404,20 @@ def build_tool(tool):
             # two columns end on the same line. A cut-out still is left alone:
             # it has no frame to square up and stretching it would distort it.
             fills = any(not (len(sh) > 2 and sh[2] == "still") for sh in v["shots"])
-            btns = "".join(
-                f'<a class="btn{"".join(" btn-" + f for f in b[2:])}" '
-                f'href="{b[1]}">{b[0]}</a>'
-                for b in v["buttons"])
+            # A version that sells something reads its link from BUY, the same
+            # way a template page does. No entry means no checkout yet, so the
+            # button says so and does nothing rather than pointing at "#" —
+            # a button that looks live and goes nowhere is worse than an
+            # honest one. Add the URL to BUY and it becomes a real link.
+            if v.get("buy"):
+                link = BUY.get(v["buy"], "")
+                btns = (f'<a class="btn" href="{link}" target="_blank" rel="noopener">Buy now</a>'
+                        if link else '<span class="btn btn-off">coming soon</span>')
+            else:
+                btns = "".join(
+                    f'<a class="btn{"".join(" btn-" + f for f in b[2:])}" '
+                    f'href="{b[1]}">{b[0]}</a>'
+                    for b in v.get("buttons", []))
             price_chip = (f'<span class="price-chip">{v["price"]}</span>') if v.get("price") else ""
             specs = "".join(f"<div><dt>{k}</dt><dd>{val}</dd></div>" for k, val in v["specs"])
             blocks.append(f"""      <section class="chunk" id="{v['id']}">
