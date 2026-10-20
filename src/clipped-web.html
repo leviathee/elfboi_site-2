@@ -1445,6 +1445,34 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     else { portal = 0; spinning = false; drawTable(); }
   }
 
+  // A slow drift while nobody has taken hold of it, so the field reads as an
+  // object in space rather than a picture, and the "drag to turn" hint below it
+  // looks like an invitation rather than an instruction.
+  //
+  // `idle` was already declared and already set to false on pointerdown — it
+  // just had nothing reading it, so the sway was scaffolded and never built.
+  // This reads it. Once someone has turned the table themselves the drift stops
+  // for good: moving it under them after they have chosen an angle is the page
+  // arguing with them, not charm.
+  //
+  // Two periods that do not divide into each other, so it wanders rather than
+  // ticking back and forth on a loop you can count.
+  var SWAY_YAW = 0.085, SWAY_PITCH = 0.04;   // radians, either side of home
+  var SWAY_MS = 11000;                       // one pass of the slower of the two
+  var swayOff = window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function swayLoop(now) {
+    if (!idle || swayOff) return;
+    if (!t0) t0 = now;
+    var a = (now - t0) / SWAY_MS * Math.PI * 2;
+    yaw = YAW0 + Math.sin(a) * SWAY_YAW;
+    pitch = PITCH0 + Math.sin(a * 0.61 + 1.1) * SWAY_PITCH;
+    // the render animation already paints every frame; do not paint twice
+    if (!ticking) drawTable();
+    requestAnimationFrame(swayLoop);
+  }
+
   // the graphic is the import button as well as the drop target: a press that
   // does not travel opens the file picker, a press that travels turns the table
   var dragging = false, travelled = 0, oX = 0, oY = 0, oYaw = 0, oPitch = 0;
@@ -1631,6 +1659,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
 
   surface = synth();
   restore = 0;
+  requestAnimationFrame(swayLoop);
   shown = 0;
   paintQuota();
   paintReset();
