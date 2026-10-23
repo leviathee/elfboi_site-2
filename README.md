@@ -57,9 +57,45 @@ not implement `/api/declip`; live processing needs the configured Vercel route
 and backend. The tests use in-memory API fixtures to cover upload, asynchronous
 inspection, queues, refresh, uncertain responses, retries and expiring grants.
 
-The canvas remains a decorative progress animation. The overall bar is a
-presentation estimate, not an exact elapsed-time percentage. Minimal recovery
-controls use the existing styling and appear only when needed.
+The canvas uses a small excerpt of the uploaded audio when browser decoding is
+available; it remains a visual illustration of progress, not a measurement of
+restoration quality. The overall bar is a presentation estimate, not an exact
+elapsed-time percentage. Minimal recovery controls keep the existing styling.
+
+### Waveform preview
+
+Preview generation is optional and independent of upload, inspection and
+restoration. A dedicated module worker reads and decodes samples from the first six
+seconds. If that is silent, it tries one six-second excerpt near the middle using
+metadata duration; it never scans the whole recording to find a good passage.
+The original first-channel, geometric-mean RMS selection and signed peak sampling
+produce the same 34 by 113 surface from a given excerpt. The original camera,
+colors, glow and progress animation are retained, with a 350 ms shape transition.
+
+Limits: eight seconds of wall time, 16 MiB of source reads, a 2 MiB reader cache,
+at most two six-second excerpts, and input up to eight channels / 192 kHz. Workers
+are terminated on timeout, cancellation, replacement or leaving the page. No
+AudioContext, full-file `decodeAudioData`, or WASM decoder is loaded. Browser codec
+support varies; unsupported formats (including AIFF), files over the preview
+budget and resumed jobs without their local file keep the existing idle surface.
+None of these conditions prevents the backend from processing the audio.
+
+After completion, an optional signed range read takes the same ~0.4-second window
+from the mono 48 kHz float WAV and applies the original cosmetic plateau rounding
+to the display only. The WAV is never modified. Download is available immediately;
+this work has a five-second deadline and 256 KiB read budget. A server ignoring
+Range, CORS failure or expired grant leaves the input preview intact. Late results
+cannot replace a newer file's surface. No backend or deployment setting changes
+are required.
+
+The self-hosted [Mediabunny bundle](vendor/README.md) is loaded only in the preview
+worker, on file selection. Ordinary site builds still need only Python.
+
+Local browser checks with 12-second fixtures decoded WAV, MP3, AAC/M4A, FLAC,
+Ogg and WebM/Opus in roughly 0.1–0.3 seconds. A three-minute, 69.1 MB stereo float WAV took about
+0.09 seconds and read 2.42 MB. These are local preview measurements, not server
+restoration benchmarks or guarantees for every device. Tests also cover read
+limits, silent openings, short/invalid input, ranged output and cancellation.
 
 ### Overall progress timing
 
