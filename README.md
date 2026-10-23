@@ -71,6 +71,11 @@ metadata duration; it never scans the whole recording to find a good passage.
 The original first-channel, geometric-mean RMS selection and signed peak sampling
 produce the same 34 by 113 surface from a given excerpt. The original camera,
 colors, glow and progress animation are retained, with a 350 ms shape transition.
+As progress advances, the clipped input surface morphs toward a rounded display
+copy using the original plateau-rounding logic. This gives the animation a
+destination immediately, even before any restored samples exist. It is an
+illustration, not a prediction of the model's output. Only the ~3,800 display
+points are involved; the audio and restoration pipeline are unaffected.
 
 Limits: eight seconds of wall time, 16 MiB of source reads, a 2 MiB reader cache,
 at most two six-second excerpts, and input up to eight channels / 192 kHz. Workers
@@ -84,7 +89,10 @@ After completion, an optional signed range read takes the same ~0.4-second windo
 from the mono 48 kHz float WAV and applies the original cosmetic plateau rounding
 to the display only. The WAV is never modified. Download is available immediately;
 this work has a five-second deadline and 256 KiB read budget. A server ignoring
-Range, CORS failure or expired grant leaves the input preview intact. Late results
+Range, CORS failure or expired grant leaves the illustrative target intact. The
+real result replaces that target through a 650 ms blend from the currently
+displayed shape, including if it arrives during another transition. Progress
+and downloads never wait for the blend. Reduced motion skips shape fades. Late results
 cannot replace a newer file's surface. No backend or deployment setting changes
 are required.
 

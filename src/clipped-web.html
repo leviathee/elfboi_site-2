@@ -526,6 +526,7 @@
 import { ApiError, DeclipClient, readBank, saveBank } from "./src/clipped-api.mjs";
 import { OverallProgress } from "./src/clipped-progress.mjs";
 import { WaveformPreview } from "./src/clipped-preview.mjs";
+import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
    Fill these in once the site is live on its own domain and the AdSense account
@@ -574,7 +575,8 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   var restore = 0.55;               // 0 = peaks sliced off, 1 = peaks whole
   var yaw = YAW0, pitch = PITCH0;   // the viewer's orbit
   var idle = true, t0 = 0;
-  var surface = [];                 // [row][col] samples, -1..1
+  var waveform = new WaveformAnimation(synth(), TCLIP);
+  var surface = waveform.surface;   // [row][col] display samples, -1..1
   var portal = 0, portalWant = 0;   // 0 flat table, 1 gathered into the ring
   var spin = 0, lastHover = 0, spinning = false;
 
@@ -681,10 +683,9 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
 
   // Progress, orbit and the completion flare can request the same frame.
   // Paint once, using their latest values, rather than racing separate draws.
-  var tableFrame = 0, surfaceFade = null;
-  function setSurface(next) {
-    if (swayOff) { surface = next; surfaceFade = null; }
-    else surfaceFade = { from: surface.map(function (row) { return row.slice(); }), to: next, start: performance.now() };
+  var tableFrame = 0;
+  function setSurface(next, kind) {
+    waveform.set(next, { kind: kind, progress: restore, now: performance.now(), immediate: swayOff });
     drawTable();
   }
   function drawTable() {
@@ -695,14 +696,8 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     });
   }
   function paintTable(now) {
-    if (surfaceFade) {
-      var t = Math.min(1, Math.max(0, (now - surfaceFade.start) / 350));
-      var ease = t * t * (3 - 2 * t);
-      for (var r = 0; r < ROWS; r++) for (var i = 0; i <= COLS; i++)
-        surface[r][i] = surfaceFade.from[r][i] + (surfaceFade.to[r][i] - surfaceFade.from[r][i]) * ease;
-      if (t === 1) surfaceFade = null;
-      else drawTable();
-    }
+    waveform.tick(restore, now);
+    if (waveform.animating) drawTable();
     var scale = fitScale();
     var ceil = TCLIP + (1 - TCLIP) * restore;
     var lineCol = mix3(line().l0, line().lm, line().l1, restore);
@@ -765,7 +760,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
         var px = 0, py = 0;
 
         for (var i = 0; i <= COLS; i++) {
-          var v = Math.max(-ceil, Math.min(ceil, row[i]));
+          var v = row[i];
           var p = project((i / COLS - 0.5) * SX, -v * SY, z);
           p.x = CX + (p.x - CX) * scale;
           p.y = CY + (p.y - CY) * scale;
@@ -951,7 +946,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
 
   var preview = new WaveformPreview({ onSurface: setSurface });
   var client = new DeclipClient({ token: getToken, onChange: renderState, onQuota: paintQuota,
-    onFile: function (file) { setSurface(synth()); preview.start(file); },
+    onFile: function (file) { setSurface(synth(), 'idle'); preview.start(file); },
     onComplete: function (row) {
       bank = bank.filter(function (item) { return item.id !== row.id; });
       bank.unshift(row); bank = bank.slice(0, 10);
@@ -1344,7 +1339,7 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
     }
   })();
 
-  surface = synth();
+  waveform.tick(0, performance.now());
   restore = 0;
   requestAnimationFrame(swayLoop);
   drawTable();

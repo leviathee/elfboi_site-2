@@ -25,7 +25,7 @@ export class WaveformPreview {
         if (this.current !== state || !state.worker) return;
         clearTimeout(state.timer); worker.terminate(); state.worker = null;
         state.result = result;
-        if (result) this.onSurface(result.surface);
+        if (result) this.onSurface(result.surface, 'input');
         this.restore(state);
       };
       worker.onmessage = ({ data }) => settle(data);
@@ -50,7 +50,7 @@ export class WaveformPreview {
       const grant = await state.getGrant();
       if (this.current !== state || state.abort.signal.aborted) return;
       const surface = await this.readOutput(grant.url, state.result, { signal: state.abort.signal });
-      if (this.current === state && !state.abort.signal.aborted) this.onSurface(surface);
+      if (this.current === state && !state.abort.signal.aborted) this.onSurface(surface, 'result');
     } catch { /* The render/download is already ready; this is decoration only. */ }
     finally { clearTimeout(timer); }
   }
