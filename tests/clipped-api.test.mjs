@@ -78,6 +78,23 @@ test('original file follows create/upload/async inspection/start; only the real 
   assert.ok(f.views.some(v => v.phase === 'processing' && v.value === 0.5));
   assert.equal(f.views.at(-1).busy, false);
 });
+test('preview work is optional and never awaited by upload or completion', async () => {
+  for (const callback of [() => new Promise(() => {}), () => { throw new Error('Preview decoder unavailable'); }]) {
+    const f = fixture(); let accepted = 0;
+    f.client.onFile = value => { assert.equal(value, file); accepted++; return callback(); };
+    await f.client.submit(file);
+    assert.equal(accepted, 1);
+    assert.equal(f.counts.uploads, 1);
+    assert.equal(f.completed.length, 1);
+  }
+});
+test('a rejected replacement file cannot replace the active job waveform', async () => {
+  const store = storage(); saveActive(store, { uploaded: false });
+  const f = fixture({ storage: store }); let previews = 0;
+  f.client.onFile = () => previews++;
+  await f.client.submit({ ...file, name: 'different.wav' });
+  assert.equal(previews, 0); assert.equal(f.counts.uploads, 0);
+});
 test('refresh and a dropped connection resume the saved job without uploading or creating again', async () => {
   const store = storage(); saveActive(store);
   const f = fixture({ storage: store, failGet: true, hidden: true, job: { progress: { stage: 'inspecting' } } });

@@ -71,8 +71,8 @@ export class DeclipClient {
   constructor({ base = '/api/declip', fetch: fetcher = globalThis.fetch.bind(globalThis), storage = browserStorage(),
     token = async () => '', upload = uploadFile, duration = metadataDuration,
     wait = ms => new Promise(resolve => setTimeout(resolve, ms)), hidden = () => globalThis.document?.hidden,
-    onChange = () => {}, onQuota = () => {}, onComplete = () => {} } = {}) {
-    Object.assign(this, { base, fetcher, storage, token, upload, duration, wait, hidden, onChange, onQuota, onComplete });
+    onChange = () => {}, onQuota = () => {}, onComplete = () => {}, onFile = () => {} } = {}) {
+    Object.assign(this, { base, fetcher, storage, token, upload, duration, wait, hidden, onChange, onQuota, onComplete, onFile });
     const active = load(storage, ACTIVE_KEY);
     this.active = active && (validId(active.id) || (typeof active.request?.request_id === 'string' && active.request.request_id.length >= 16)) ? active : null;
     this.controller = new AbortController(); this.cancelling = false;
@@ -167,6 +167,9 @@ export class DeclipClient {
         this.persist();
       }
       this.file = file;
+      // Optional presentation work starts only for the accepted file. Never
+      // await it or allow a preview failure to prevent upload/restoration.
+      try { this.onFile(file); } catch { /* Preview unavailable. */ }
       await this.create();
       this.controller.signal.throwIfAborted();
     } catch (error) { this.problem(error); return; }
