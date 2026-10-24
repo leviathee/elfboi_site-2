@@ -431,7 +431,7 @@
           </div>
 
           <h2 style="margin-top:22px">Daily Usage Limit</h2>
-          <div class="row"><span id="used">0:00 of 20:00 used</span><span id="left">20:00 left</span></div>
+          <div class="row"><span id="used">Checking your daily limit&hellip;</span><span id="left"></span></div>
           <div class="rail-line quota"><div class="fill" id="qfill"></div></div>
           <div class="note" id="reset">Limits reset tomorrow at midnight.</div>
 
@@ -457,7 +457,7 @@
           <h2 class="head">Clipped Browser <span class="tagbox">Free</span></h2>
           <div class="spec">
             <div class="k">Restore Amount</div><div class="v">Full, Fixed</div>
-            <div class="k">Daily Limit</div><div class="v">20:00 Of Audio</div>
+            <div class="k">Daily Limit</div><div class="v" id="limit-spec">6 Hours Of Audio</div>
             <div class="k">Account</div><div class="v">No Login Needed</div>
             <div class="k">Your Audio</div><div class="v">Never Uploaded</div>
             <div class="k">Output</div><div class="v">24 Bit WAV, Source Rate</div>
@@ -486,7 +486,7 @@
                 <div class="k">DAW / NLE</div>
                   <div class="v c off">No</div><div class="v c on">Yes</div><div class="v c off">No</div>
                 <div class="k">Daily Limit</div>
-                  <div class="v c off">20:00</div><div class="v c on">None</div><div class="v c on">None</div>
+                  <div class="v c off" id="limit-cmp">6 Hours</div><div class="v c on">None</div><div class="v c on">None</div>
               </div>
             </div>
           </div>
@@ -866,6 +866,33 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
       + ', in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm.';
     prepareVerification(data).catch(function () { /* Retry when a file is selected. */ });
   }
+
+  // The two tables further down the page are plain copy: paintQuota never
+  // touches them, so a hardcoded limit there silently contradicts the backend
+  // the moment the backend changes (it already did once: the markup said
+  // twenty minutes while the server was granting six hours). The served HTML
+  // carries the current figure so the page is right with no JS at all, and
+  // this corrects it from the server's own number if the two drift again.
+  function limitWords(sec) {
+    sec = Math.max(0, Math.round(sec));
+    if (sec >= 3600) {
+      var h = sec / 3600;
+      if (h === Math.floor(h)) return h + (h === 1 ? ' Hour' : ' Hours');
+      return Math.floor(sec / 3600) + 'h ' + Math.round((sec % 3600) / 60) + 'm';
+    }
+    var m = Math.round(sec / 60);
+    return m + (m === 1 ? ' Minute' : ' Minutes');
+  }
+  function paintLimitCopy(data) {
+    var daily = data && data.limits && data.limits.device_seconds_per_day;
+    if (!daily) return;                     // Keep the served copy on a bad read.
+    var words = limitWords(daily),
+        spec = document.getElementById('limit-spec'),
+        cmp = document.getElementById('limit-cmp');
+    if (spec) spec.textContent = words + ' Of Audio';
+    if (cmp) cmp.textContent = words;
+  }
+
   function say(t, bad) { statusEl.textContent = t; statusEl.className = bad ? 'err' : ''; }
 
   var progress = new OverallProgress(), progressFrame = 0;
@@ -945,7 +972,8 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   }
 
   var preview = new WaveformPreview({ onSurface: setSurface });
-  var client = new DeclipClient({ token: getToken, onChange: renderState, onQuota: paintQuota,
+  var client = new DeclipClient({ token: getToken, onChange: renderState,
+    onQuota: function (data) { paintQuota(data); paintLimitCopy(data); },
     onFile: function (file) { setSurface(synth(), 'idle'); preview.start(file); },
     onComplete: function (row) {
       bank = bank.filter(function (item) { return item.id !== row.id; });

@@ -61,10 +61,10 @@ TOOLS = [
                 "id": "browser", "label": "Clipped Browser",
                 "title": "Clipped Browser", "price": "Free",
                 "summary": "Free, and there is nothing to install. Restore clipped dialogue and vocals straight in "
-                           "the browser, up to twenty minutes of audio a day.",
+                           "the browser, up to six hours of audio a day.",
                 "buttons": [("Open the browser version", "tools-clipped-browser.html")],
                 "specs": [("price", "Free"),
-                          ("limits", "Twenty minutes of audio a day, one file at a time"),
+                          ("limits", "Six hours of audio a day, one file at a time"),
                           ("runs in", "Any current browser, on a laptop or a phone"),
                           ("audio", "24-bit, 48 kHz. Mono and stereo. Outputs to .wav")],
                 "shots": [("images/clipped-browser.jpg",
