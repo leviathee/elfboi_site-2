@@ -1081,6 +1081,13 @@ def head(title, description, extra=""):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&family=Bungee&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="elfboi.css">
+<!-- Proves to Google that this domain is ours. It is one of the three ways
+     AdSense will verify a site, alongside ads.txt at the root and the ad
+     loader script, and it is the only one that costs a page anything close to
+     nothing: no JavaScript, no request to Google. It does NOT put ads on a
+     page — the ad units live only in src/clipped-web.html, and this tag
+     changes nothing about where they appear. -->
+<meta name="google-adsense-account" content="ca-pub-3965216469889452">
 {ANALYTICS}
 
 {extra}</head>
