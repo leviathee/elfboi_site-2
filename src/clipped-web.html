@@ -440,6 +440,12 @@
       </div>
       </div>
 
+      <!-- Sits just under the app, which is the most viewable spot on the page:
+           Google's study puts ads right above the fold ahead of every other
+           position. It is also the one people are looking at while a file
+           renders, which is the least objectionable moment to show them one. -->
+      <div class="slot wide" data-ad="afterApp" style="margin-top:clamp(20px, 3vw, 34px)"></div>
+
       <div class="card bank" style="margin-top:clamp(20px, 3vw, 34px)">
         <h2>Your Bank</h2>
         <div class="bankhead">
@@ -493,6 +499,8 @@
     </div>
 
 
+      <div class="slot wide" data-ad="banner" style="margin-bottom:30px"></div>
+
       <div class="card news">
         <div class="newstext">
           <h2 class="head">Get updated</h2>
@@ -505,8 +513,6 @@
           <button class="btn" type="submit">Join</button>
         </form>
       </div>
-
-    <div class="slot wide" data-ad="banner" style="margin-top:30px"></div>
 
     <p class="adnote">Clipped Browser is free, and the ads are what keep it that way &mdash; they
       cover the servers it runs on. We are a very small team, so they make a real difference.
@@ -525,25 +531,31 @@ import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
    One entry per `.slot[data-ad]` in the markup: the unit's id, the inline style
-   from its own snippet, and its ad format. There is one unit, below the page.
-   Leave `pub` empty and initAds() does nothing — the page then carries no ad
-   boxes at all. The loader script itself lives in the page head, because it
-   doubles as the site-verification tag and Google asks for that one in the HTML.
+   from its own snippet, and its ad format. Leave `pub` empty and initAds() does
+   nothing — the page then carries no ad boxes at all. The loader script itself
+   lives in the page head, because it doubles as the site-verification tag and
+   Google asks for that one in the HTML.
 
-   `banner` is a responsive Display unit: it fills whatever width the slot has,
-   from 970px here down to a phone, and picks its own height. The Multiplex unit
-   that was here before (6237855181) drew a grid of recommended-content cards
-   that we could not style, so it is retired rather than deleted — it still
-   exists in AdSense if it is ever wanted back.
+   Both are responsive Display units: each fills whatever width its slot has,
+   970px down to a phone, and picks its own height.
 
-   To add a second unit, give it a `.slot` in the markup with a matching
-   `data-ad`, and an entry here. Put it above the fold if it is meant to earn:
-   Google's own study found above-the-fold ads viewable 68% of the time against
-   40% below it.
+     afterApp   6310007372   under the app, above Your Bank
+     banner     5279996739   above the newsletter
+
+   Placement is what decides whether these earn anything. Google's study puts
+   ads right above the fold ahead of every other position, at 68% viewable
+   against 40% below it, and AdSense pays per impression — so `afterApp` is
+   expected to do most of the work.
+
+   The Multiplex unit that used to be the bottom slot (6237855181) drew a grid
+   of recommended-content cards we could not style; it is retired rather than
+   deleted, and still exists in AdSense. So do the two 160x600 rail units
+   (7805465601, 7271735257) from the earlier side-rail layout.
 --------------------------------------------------------------------------- */
 var ADSENSE = {
   pub: 'ca-pub-3965216469889452',
-  banner: { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
+  afterApp: { id: '6310007372', style: 'display:block', format: 'auto', fullWidth: true },
+  banner:   { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
 };
 
 (function () {
