@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Elfboi Clipped Browser</title>
+<!-- AdSense. This tag is also what verifies the site, and Google asks for that
+     one in the page head, so it is static here rather than appended by
+     initAds() — a crawler that does not run our JS still sees it. -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3965216469889452"
+        crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=DM+Mono:wght@400;500&family=Fredoka:wght@300;400;500;600&display=swap">
 <style>
   :root {
@@ -109,26 +114,37 @@
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(12px, 1.8vw, 26px); align-items: start;
   }
+  /* With ads on, the frame gains a 160px column either side for the rails. The
+     max-width grows by both rails plus both gaps (1220 -> 1592) so the reading
+     column keeps the width it has without ads instead of losing 320px to them. */
   body.ads .frame {
-    max-width: 1500px;
-    grid-template-columns: clamp(92px, 10vw, 160px) minmax(0, 1fr) clamp(92px, 10vw, 160px);
+    max-width: 1592px;
+    grid-template-columns: 160px minmax(0, 1fr) 160px;
   }
-  .rail { position: sticky; top: 72px; margin-top: clamp(26px, 5vw, 104px); }
-  /* The ad slots hold no space and draw nothing until a real unit is in them:
-     initAds() puts `ads` on the body once ADSENSE.pub is filled in, and only
-     then do the rails and the banner take up room. */
+  /* Sticky, so the rails stay in view for the whole visit instead of scrolling
+     past in a second. `top` clears the header. */
+  .rail { position: sticky; top: 72px; }
+
+  /* The slots hold no space and draw nothing until a real unit is in them:
+     initAds() puts `ads` on the body only once ADSENSE.pub is filled in. */
   .rail, .slot.wide { display: none; }
   body.ads .rail, body.ads .slot.wide { display: block; }
   .slot { display: block; }
-  body.ads .slot.tall { height: min(600px, 62vh); }
-  body.ads .slot.wide { height: clamp(120px, 17vw, 250px); max-width: 970px; margin: 0 auto 30px; }
-  @media (max-width: 820px) {
-    /* `body.ads .frame` above outranks a bare `.frame`, media query or not, so
-       without naming it here the three-column rail layout survived onto phones:
-       at 390px that left a 154px reading column between two 92px rails. */
-    .frame, body.ads .frame { grid-template-columns: minmax(0, 1fr); }
-    .rail { position: static; margin-top: 0; }
-    body.ads .rail .slot.tall { height: 110px; }
+  body.ads .slot.tall { width: 160px; height: 600px; }
+  /* No height on the wide slot, on purpose. Google's responsive units calculate
+     their own size and its docs say not to put one in a container with a fixed
+     or limited height. The rails are fixed units, so they are sized exactly. */
+  body.ads .slot.wide { max-width: 970px; margin: 0 auto 30px; }
+  @media (max-width: 1340px) {
+    /* `body.ads .frame` outranks a bare `.frame` whatever the media query, so
+       it has to be named here or the three-column layout survives onto phones:
+       at 390px that would leave a 70px reading column between two rails.
+       Two rails and their gaps cost 372px, and the app's own two-column layout
+       collapses at 900px, so 1340px is where the reading column stops clearing
+       900. Below it the rails come out and the newsletter unit carries the
+       page — it is responsive, so it fills whatever width is left. */
+    .frame, body.ads .frame { grid-template-columns: minmax(0, 1fr); max-width: 1220px; }
+    .rail, body.ads .rail { display: none; }
   }
 
   /* ---------------------------------------------------------------- hero */
@@ -372,6 +388,7 @@
 </div>
 
 <div class="frame">
+
   <div class="rail"><div class="slot tall" data-ad="railLeft"></div></div>
 
   <div>
@@ -496,6 +513,8 @@
     </div>
 
 
+      <div class="slot wide" data-ad="banner" style="margin-bottom:30px"></div>
+
       <div class="card news">
         <div class="newstext">
           <h2 class="head">Get updated</h2>
@@ -509,13 +528,16 @@
         </form>
       </div>
 
-    <div class="slot wide" data-ad="banner" style="margin-top:30px"></div>
-
     <p class="adnote">Clipped Browser is free, and the ads are what keep it that way &mdash; they
       cover the servers it runs on. We are a very small team, so they make a real difference.
       Sorry for the clutter, thank you for the support, and we hope Clipped saves you some work.</p>
   </div>
 
+  <!-- The rails are the only ads in view when the page opens, and they are
+       sticky, so they stay in view through the whole render wait rather than
+       scrolling away after a second — with AdSense paying per impression, time
+       in view is the thing being sold. They are also peripheral, so unlike an
+       in-content unit they never sit between someone and their download. -->
   <div class="rail"><div class="slot tall" data-ad="railRight"></div></div>
 </div>
 
@@ -529,13 +551,44 @@ import { WaveformPreview } from "./src/clipped-preview.mjs";
 import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
-   Fill these in once the site is live on its own domain and the AdSense account
-   is approved, then the dashed placeholders become real ad units. Leave `pub`
-   empty and nothing loads — no script, no request to Google.
-     pub       your publisher id, e.g. 'ca-pub-1234567890123456'
-     railLeft  / railRight / banner   the ad unit slot ids from AdSense
+   One entry per `.slot[data-ad]` in the markup: the unit's id, the inline style
+   from its own snippet, and its ad format.
+
+   The loader script lives in the page head, because it doubles as the tag that
+   verifies the site and Google asks for that one in the HTML. Note what that
+   changed: emptying `pub` here still stops initAds() and leaves the page with
+   no ad boxes, but the head tag keeps loading and Google is still contacted.
+   To take the page off AdSense completely, remove that tag as well.
+
+     railLeft   160x600 fixed, sticky
+     railRight  160x600 fixed, sticky
+     banner     responsive Display, above the newsletter
+
+   The rails are the units in view when the page opens, and being sticky they
+   stay in view for the whole visit. That is what earns: Google's study puts
+   ads right above the fold ahead of every other position, at 68% viewable
+   against 40% below it, and AdSense pays per impression. 160x600 is not a size
+   Google's own guide rates — it is listed under "other supported sizes", not
+   the top-performing table — but being seen at all beats being well sized and
+   never scrolled to.
+
+   The rails leave the layout below 1340px, so the newsletter unit is the only
+   one phones and tablets get. It is responsive, so it fills whatever width it
+   has there.
+
+   A fixed-size unit must not be given `format: 'auto'`, and a responsive one
+   must not be put in a container with a fixed height — hence the two shapes.
+
+   Retired but still live in AdSense, if either is wanted back: 6237855181
+   (the Multiplex unit that was below the newsletter) and 6310007372 (the unit
+   that was briefly under the app).
 --------------------------------------------------------------------------- */
-var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
+var ADSENSE = {
+  pub: 'ca-pub-3965216469889452',
+  railLeft:  { id: '7805465601', style: 'display:inline-block;width:160px;height:600px' },
+  railRight: { id: '7271735257', style: 'display:inline-block;width:160px;height:600px' },
+  banner:    { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
+};
 
 (function () {
   var W = 456, H = 322;
@@ -1338,33 +1391,55 @@ var ADSENSE = { pub: '', railLeft: '', railRight: '', banner: '' };
   // ------------------------------------------------------------ ad units
   (function initAds() {
     if (!ADSENSE || !ADSENSE.pub) return;          // nothing loads until it is set
-    // `ads` on the body is what gives the rails and the banner their space, so
-    // the page carries no empty boxes until there is something real to put in.
+    // `ads` on the body is what gives the slot its space, so the page carries
+    // no empty box until there is something real to put in it.
     document.body.className = (document.body.className + ' ads').trim();
-    var loader = document.createElement('script');
-    loader.async = true;
-    loader.crossOrigin = 'anonymous';
-    loader.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADSENSE.pub;
-    document.head.appendChild(loader);
+    // The loader lives in <head>; see the note there. Nothing to inject here.
 
-    var slots = document.querySelectorAll('.slot[data-ad]');
-    for (var i = 0; i < slots.length; i++) {
-      var slot = slots[i], id = ADSENSE[slot.getAttribute('data-ad')];
-      if (!id) continue;
+    function fill(slot) {
+      var unit = ADSENSE[slot.getAttribute('data-ad')];
+      if (!unit || !unit.id) return;
+      if (slot.getAttribute('data-ad-filled')) return;   // never ask twice
+      // Skip a slot the layout has hidden — below 1340px that is both rails.
+      // Filling one anyway would ask Google for an ad nobody can see, which is
+      // an impression that can never be viewable: it drags the page's
+      // viewability down and is the shape of thing that reads as invalid
+      // traffic. getClientRects() is empty for anything `display:none`.
+      if (!slot.getClientRects().length) return;
+      slot.setAttribute('data-ad-filled', '1');
       slot.innerHTML = '';
       slot.style.border = '0';
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
-      ins.style.display = 'block';
-      ins.style.width = '100%';
-      ins.style.height = '100%';
+      // Each unit was created in AdSense at a particular size and format, so it
+      // gets the style, format and flags from its own snippet rather than one
+      // shared guess: a fixed size does not want 'auto', and a Multiplex unit
+      // sizes itself and breaks if it is given a height.
+      ins.setAttribute('style', unit.style);
       ins.setAttribute('data-ad-client', ADSENSE.pub);
-      ins.setAttribute('data-ad-slot', id);
-      ins.setAttribute('data-ad-format', 'auto');
-      ins.setAttribute('data-full-width-responsive', 'true');
+      ins.setAttribute('data-ad-slot', unit.id);
+      if (unit.format) ins.setAttribute('data-ad-format', unit.format);
+      if (unit.fullWidth) ins.setAttribute('data-full-width-responsive', 'true');
       slot.appendChild(ins);
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
     }
+
+    function sweep() {
+      var slots = document.querySelectorAll('.slot[data-ad]');
+      for (var i = 0; i < slots.length; i++) fill(slots[i]);
+    }
+    sweep();
+
+    // A slot skipped above because it was hidden becomes visible if the window
+    // is widened past the rail breakpoint — dragging a window wider, or
+    // unsnapping it from half the screen. Without this sweep the rails would
+    // then be two empty 160x600 gaps for the rest of the visit. Filled slots
+    // are flagged, so nothing is ever requested twice.
+    var pending;
+    window.addEventListener('resize', function () {
+      clearTimeout(pending);
+      pending = setTimeout(sweep, 200);
+    });
   })();
 
   waveform.tick(0, performance.now());
