@@ -552,10 +552,13 @@ import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
    One entry per `.slot[data-ad]` in the markup: the unit's id, the inline style
-   from its own snippet, and its ad format. Leave `pub` empty and initAds() does
-   nothing — the page then carries no ad boxes at all. The loader script itself
-   lives in the page head, because it doubles as the site-verification tag and
-   Google asks for that one in the HTML.
+   from its own snippet, and its ad format.
+
+   The loader script lives in the page head, because it doubles as the tag that
+   verifies the site and Google asks for that one in the HTML. Note what that
+   changed: emptying `pub` here still stops initAds() and leaves the page with
+   no ad boxes, but the head tag keeps loading and Google is still contacted.
+   To take the page off AdSense completely, remove that tag as well.
 
      railLeft   160x600 fixed, sticky
      railRight  160x600 fixed, sticky
@@ -1393,16 +1396,17 @@ var ADSENSE = {
     document.body.className = (document.body.className + ' ads').trim();
     // The loader lives in <head>; see the note there. Nothing to inject here.
 
-    var slots = document.querySelectorAll('.slot[data-ad]');
-    for (var i = 0; i < slots.length; i++) {
-      var slot = slots[i], unit = ADSENSE[slot.getAttribute('data-ad')];
-      if (!unit || !unit.id) continue;
+    function fill(slot) {
+      var unit = ADSENSE[slot.getAttribute('data-ad')];
+      if (!unit || !unit.id) return;
+      if (slot.getAttribute('data-ad-filled')) return;   // never ask twice
       // Skip a slot the layout has hidden — below 1340px that is both rails.
       // Filling one anyway would ask Google for an ad nobody can see, which is
       // an impression that can never be viewable: it drags the page's
       // viewability down and is the shape of thing that reads as invalid
       // traffic. getClientRects() is empty for anything `display:none`.
-      if (!slot.getClientRects().length) continue;
+      if (!slot.getClientRects().length) return;
+      slot.setAttribute('data-ad-filled', '1');
       slot.innerHTML = '';
       slot.style.border = '0';
       var ins = document.createElement('ins');
@@ -1419,6 +1423,23 @@ var ADSENSE = {
       slot.appendChild(ins);
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
     }
+
+    function sweep() {
+      var slots = document.querySelectorAll('.slot[data-ad]');
+      for (var i = 0; i < slots.length; i++) fill(slots[i]);
+    }
+    sweep();
+
+    // A slot skipped above because it was hidden becomes visible if the window
+    // is widened past the rail breakpoint — dragging a window wider, or
+    // unsnapping it from half the screen. Without this sweep the rails would
+    // then be two empty 160x600 gaps for the rest of the visit. Filled slots
+    // are flagged, so nothing is ever requested twice.
+    var pending;
+    window.addEventListener('resize', function () {
+      clearTimeout(pending);
+      pending = setTimeout(sweep, 200);
+    });
   })();
 
   waveform.tick(0, performance.now());
