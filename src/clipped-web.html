@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Elfboi Clipped Browser</title>
+<!-- Same icons every other page carries, via head() in build.py. This page is
+     not generated from head(), so it had no favicon at all and was the one tab
+     on the site showing a blank page icon. The ?v=2 matches the other pages so
+     a browser that has already cached them does not fetch twice. -->
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png?v=2">
+<link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png?v=2">
 <!-- Same verification tag every other page carries, via head() in build.py.
      It proves the domain is ours and loads nothing. -->
 <meta name="google-adsense-account" content="ca-pub-3965216469889452">
@@ -531,9 +538,9 @@
         </form>
       </div>
 
-    <p class="adnote">Clipped Browser is free, and the ads are what keep it that way &mdash; they
-      cover the servers it runs on. We are a very small team, so they make a real difference.
-      Sorry for the clutter, thank you for the support, and we hope Clipped saves you some work.</p>
+    <p class="adnote">Sorry for the ads! Clipped Browser is free, and we want to keep it that way
+      so it is to cover the costs of the servers it runs on. We are a very small team, so they make a
+      real difference. Thank you for the support and we hope Clipped helps!</p>
   </div>
 
   <!-- The rails are the only ads in view when the page opens, and they are
