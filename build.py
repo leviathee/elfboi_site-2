@@ -29,6 +29,7 @@ TOOLS = [
                   ("severe", "Severe clipping"),
                   ("extreme", "Extreme clipping")],
         "collab": "Josh Hong",
+        "tutorial_id": "sfWDlQ38FDg",   # youtu.be/sfWDlQ38FDg
         "video": "images/clipped-ui.webm",
         "video_mp4": "images/clipped-ui.mp4",
         "poster": "images/clipped-poster.jpg",
@@ -60,10 +61,10 @@ TOOLS = [
                 "id": "browser", "label": "Clipped Browser",
                 "title": "Clipped Browser", "price": "Free",
                 "summary": "Free, and there is nothing to install. Restore clipped dialogue and vocals straight in "
-                           "the browser, up to twenty minutes of audio a day.",
+                           "the browser, up to six hours of audio a day.",
                 "buttons": [("Open the browser version", "tools-clipped-browser.html")],
                 "specs": [("price", "Free"),
-                          ("limits", "Twenty minutes of audio a day, one file at a time"),
+                          ("limits", "Six hours of audio a day, one file at a time"),
                           ("runs in", "Any current browser, on a laptop or a phone"),
                           ("audio", "24-bit, 48 kHz. Mono and stereo. Outputs to .wav")],
                 "shots": [("images/clipped-browser.jpg",
@@ -1380,12 +1381,15 @@ def build_tool(tool):
         gallery = ('<div class="frame">image 01</div><div class="frame">image 02</div>'
                    '<div class="frame">image 03</div>')
 
-    tutorial_block = """      <section class="chunk" id="tutorial">
+    # A tool with a real walkthrough names its YouTube id; the rest keep the
+    # placeholder so it stays obvious which ones are still waiting for one.
+    tut = tool.get("tutorial_id", "")
+    tutorial_block = f"""      <section class="chunk" id="tutorial">
         <h2>Tutorial</h2>
         <div class="video">
-          <!-- Replace VIDEO_ID with this tool's walkthrough. -->
-          <iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
-                  title="walkthrough"
+          {'' if tut else '<!-- Replace VIDEO_ID with this tool&#39;s walkthrough. -->'}
+          <iframe src="https://www.youtube-nocookie.com/embed/{tut or 'VIDEO_ID'}"
+                  title="{tool['name']} walkthrough"
                   allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
                   referrerpolicy="strict-origin-when-cross-origin"
                   allowfullscreen loading="lazy"></iframe>
