@@ -1926,8 +1926,8 @@ def build_blog():
 
 PEOPLE_CORE = [
     ("\u201cElfboi\u201d Lenny", "founder",
-     "Lenny created elfboi. She designs every tool, decides what gets built, writes the courses, and "
-     "builds the templates. She runs Different Fur Studios and Liema, and teaches at UCSC, CSM, and WAM."),
+     "Lenny created elfboi as an artist, recording studio manager, and University professor in the Bay "
+     "Area. She writes the courses and builds the templates and collaborates with artists on every tool!"),
     ("Anthony Leedom", "engineering, and a constant",
      "Anthony builds the machinery behind several of the tools and works on training them. He is a music "
      "producer, and he and Lenny were in a band together at college, which is roughly how this started."),
