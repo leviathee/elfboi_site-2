@@ -530,15 +530,20 @@ import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
    boxes at all. The loader script itself lives in the page head, because it
    doubles as the site-verification tag and Google asks for that one in the HTML.
 
-   `banner` is currently the Multiplex unit, which draws a grid of recommended
-   content and sizes itself to the number of cards. To put a plain display ad
-   there instead, make a Display unit in AdSense (they are responsive by
-   default, so it fills whatever width this slot has, phones included), then
-   replace the id below and drop the `format` line. Nothing else changes.
+   `banner` is a responsive Display unit: it fills whatever width the slot has,
+   from 970px here down to a phone, and picks its own height. The Multiplex unit
+   that was here before (6237855181) drew a grid of recommended-content cards
+   that we could not style, so it is retired rather than deleted — it still
+   exists in AdSense if it is ever wanted back.
+
+   To add a second unit, give it a `.slot` in the markup with a matching
+   `data-ad`, and an entry here. Put it above the fold if it is meant to earn:
+   Google's own study found above-the-fold ads viewable 68% of the time against
+   40% below it.
 --------------------------------------------------------------------------- */
 var ADSENSE = {
   pub: 'ca-pub-3965216469889452',
-  banner: { id: '6237855181', style: 'display:block', format: 'autorelaxed' }
+  banner: { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
 };
 
 (function () {
@@ -1356,13 +1361,14 @@ var ADSENSE = {
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
       // Each unit was created in AdSense at a particular size and format, so it
-      // gets the style and format from its own snippet rather than one shared
-      // guess: a fixed 160x600 does not want 'auto', and a Multiplex unit sizes
-      // itself and breaks if it is given a height.
+      // gets the style, format and flags from its own snippet rather than one
+      // shared guess: a fixed size does not want 'auto', and a Multiplex unit
+      // sizes itself and breaks if it is given a height.
       ins.setAttribute('style', unit.style);
       ins.setAttribute('data-ad-client', ADSENSE.pub);
       ins.setAttribute('data-ad-slot', unit.id);
       if (unit.format) ins.setAttribute('data-ad-format', unit.format);
+      if (unit.fullWidth) ins.setAttribute('data-full-width-responsive', 'true');
       slot.appendChild(ins);
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
     }
