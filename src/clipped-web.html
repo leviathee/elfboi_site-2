@@ -114,20 +114,36 @@
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(12px, 1.8vw, 26px); align-items: start;
   }
-  /* There are deliberately no side rails. Skyscrapers either crowd the app at
-     160px wide or, at a size Google actually rates, eat 600px of a 1500px
-     layout. One unit below the page carries the ads instead, so `.frame` is the
-     same single column with ads on or off and nothing reflows when they load.
+  /* With ads on, the frame gains a second column for the 300x600 rail. The
+     max-width grows by the rail plus the gap so the reading column keeps the
+     width it has without ads, rather than losing 300px to the rail. */
+  body.ads .frame {
+    max-width: 1560px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  /* Sticky, so the rail stays in view for the whole visit instead of scrolling
+     past in a second. `top` clears the header. */
+  .rail { position: sticky; top: 72px; }
 
-     The slot holds no space and draws nothing until a real unit is in it:
+  /* The slots hold no space and draw nothing until a real unit is in them:
      initAds() puts `ads` on the body only once ADSENSE.pub is filled in. */
-  .slot.wide { display: none; }
-  body.ads .slot.wide { display: block; }
+  .rail, .slot.wide { display: none; }
+  body.ads .rail, body.ads .slot.wide { display: block; }
   .slot { display: block; }
-  /* No height here, on purpose. Google's responsive units calculate their own
-     size and its docs say not to put one in a container with a fixed or limited
-     height; a Multiplex unit likewise grows with the number of cards it draws. */
+  body.ads .slot.tall { width: 300px; height: 600px; }
+  /* No height on the wide slot, on purpose. Google's responsive units calculate
+     their own size and its docs say not to put one in a container with a fixed
+     or limited height. The rail above is a fixed unit, so it is sized exactly. */
   body.ads .slot.wide { max-width: 970px; margin: 0 auto 30px; }
+  @media (max-width: 1280px) {
+    /* `body.ads .frame` outranks a bare `.frame` whatever the media query, so
+       it has to be named here or the two-column layout survives onto phones.
+       A 300px rail needs roughly 1280px before the app's own two-column layout
+       (which collapses at 900px) starts getting squeezed, so below that the
+       rail comes out and the unit above the newsletter carries the page. */
+    .frame, body.ads .frame { grid-template-columns: minmax(0, 1fr); max-width: 1220px; }
+    .rail, body.ads .rail { display: none; }
+  }
 
   /* ---------------------------------------------------------------- hero */
   .hero { text-align: center; }
@@ -440,12 +456,6 @@
       </div>
       </div>
 
-      <!-- Sits just under the app, which is the most viewable spot on the page:
-           Google's study puts ads right above the fold ahead of every other
-           position. It is also the one people are looking at while a file
-           renders, which is the least objectionable moment to show them one. -->
-      <div class="slot wide" data-ad="afterApp" style="margin-top:clamp(20px, 3vw, 34px)"></div>
-
       <div class="card bank" style="margin-top:clamp(20px, 3vw, 34px)">
         <h2>Your Bank</h2>
         <div class="bankhead">
@@ -518,6 +528,13 @@
       cover the servers it runs on. We are a very small team, so they make a real difference.
       Sorry for the clutter, thank you for the support, and we hope Clipped saves you some work.</p>
   </div>
+
+  <!-- The second column, and the only ad that is in view when the page opens.
+       It is sticky, so it stays in view through the whole render wait rather
+       than scrolling away after a second — with AdSense paying per impression,
+       time in view is the thing being sold. It is peripheral, so unlike an
+       in-content unit it never sits between someone and their download. -->
+  <div class="rail"><div class="slot tall" data-ad="rail"></div></div>
 </div>
 
 <div class="foot"><div class="in">Feedback Is Welcomed! Write to
@@ -536,26 +553,31 @@ import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
    lives in the page head, because it doubles as the site-verification tag and
    Google asks for that one in the HTML.
 
-   Both are responsive Display units: each fills whatever width its slot has,
-   970px down to a phone, and picks its own height.
-
-     afterApp   6310007372   under the app, above Your Bank
-     banner     5279996739   above the newsletter
+     rail     300x600 fixed, sticky, right-hand column. The only unit in view
+              when the page opens, and it stays in view for the whole visit.
+     banner   responsive Display, above the newsletter. Fills the slot at any
+              width, so it is also the only unit phones and tablets get — the
+              rail comes out of the layout below 1280px.
 
    Placement is what decides whether these earn anything. Google's study puts
    ads right above the fold ahead of every other position, at 68% viewable
-   against 40% below it, and AdSense pays per impression — so `afterApp` is
+   against 40% below it, and AdSense pays per impression, so the rail is
    expected to do most of the work.
 
-   The Multiplex unit that used to be the bottom slot (6237855181) drew a grid
-   of recommended-content cards we could not style; it is retired rather than
-   deleted, and still exists in AdSense. So do the two 160x600 rail units
-   (7805465601, 7271735257) from the earlier side-rail layout.
+   A fixed-size unit must not be given `format: 'auto'`, and a responsive one
+   must not be put in a container with a fixed height — hence the two shapes.
+
+   >> rail.id is a STAND-IN: 7271735257 is the retired 160x600 right rail, used
+   >> so the layout can be seen working. Replace it with a real 300x600 unit.
+
+   Retired but still live in AdSense, if any are wanted back: 6237855181
+   (Multiplex), 6310007372 (the unit that was under the app), 7805465601 and
+   7271735257 (the old 160x600 rails).
 --------------------------------------------------------------------------- */
 var ADSENSE = {
   pub: 'ca-pub-3965216469889452',
-  afterApp: { id: '6310007372', style: 'display:block', format: 'auto', fullWidth: true },
-  banner:   { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
+  rail:   { id: '7271735257', style: 'display:inline-block;width:300px;height:600px' },
+  banner: { id: '5279996739', style: 'display:block', format: 'auto', fullWidth: true }
 };
 
 (function () {
