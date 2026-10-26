@@ -114,35 +114,20 @@
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(12px, 1.8vw, 26px); align-items: start;
   }
-  body.ads .frame {
-    max-width: 1500px;
-    /* The rail units are fixed 160x600, so the columns that hold them are 160px
-       flat. They used to be clamp(92px, 10vw, 160px), which was right for a
-       responsive unit and would clip a fixed one at anything under a 1600px
-       viewport. Below 1180px the rails come out of the layout entirely. */
-    grid-template-columns: 160px minmax(0, 1fr) 160px;
-  }
-  .rail { position: sticky; top: 72px; margin-top: clamp(26px, 5vw, 104px); }
-  /* The ad slots hold no space and draw nothing until a real unit is in them:
-     initAds() puts `ads` on the body once ADSENSE.pub is filled in, and only
-     then do the rails and the banner take up room. */
-  .rail, .slot.wide { display: none; }
-  body.ads .rail, body.ads .slot.wide { display: block; }
+  /* There are deliberately no side rails. Skyscrapers either crowd the app at
+     160px wide or, at a size Google actually rates, eat 600px of a 1500px
+     layout. One unit below the page carries the ads instead, so `.frame` is the
+     same single column with ads on or off and nothing reflows when they load.
+
+     The slot holds no space and draws nothing until a real unit is in it:
+     initAds() puts `ads` on the body only once ADSENSE.pub is filled in. */
+  .slot.wide { display: none; }
+  body.ads .slot.wide { display: block; }
   .slot { display: block; }
-  body.ads .slot.tall { width: 160px; height: 600px; }
-  /* The unit under "Get Updated" is a Multiplex unit: it decides its own height
-     from the number of cards it draws, so it gets no height here. A fixed one
-     either cropped the cards or left a gap under them. */
+  /* No height here, on purpose. Google's responsive units calculate their own
+     size and its docs say not to put one in a container with a fixed or limited
+     height; a Multiplex unit likewise grows with the number of cards it draws. */
   body.ads .slot.wide { max-width: 970px; margin: 0 auto 30px; }
-  @media (max-width: 1180px) {
-    /* `body.ads .frame` above outranks a bare `.frame`, media query or not, so
-       without naming it here the three-column rail layout survived onto phones:
-       at 390px that left a 154px reading column between two 92px rails.
-       A 160x600 skyscraper cannot be made to fit a narrow screen, so the rails
-       are dropped rather than squashed — the Multiplex unit still runs. */
-    .frame, body.ads .frame { grid-template-columns: minmax(0, 1fr); }
-    .rail, body.ads .rail { display: none; }
-  }
 
   /* ---------------------------------------------------------------- hero */
   .hero { text-align: center; }
@@ -385,7 +370,6 @@
 </div>
 
 <div class="frame">
-  <div class="rail"><div class="slot tall" data-ad="railLeft"></div></div>
 
   <div>
     <div class="hero">
@@ -528,8 +512,6 @@
       cover the servers it runs on. We are a very small team, so they make a real difference.
       Sorry for the clutter, thank you for the support, and we hope Clipped saves you some work.</p>
   </div>
-
-  <div class="rail"><div class="slot tall" data-ad="railRight"></div></div>
 </div>
 
 <div class="foot"><div class="in">Feedback Is Welcomed! Write to
@@ -542,19 +524,21 @@ import { WaveformPreview } from "./src/clipped-preview.mjs";
 import { WaveformAnimation } from "./src/clipped-waveform-animation.mjs";
 /* ---------------------------------------------------------------------------
    GOOGLE ADSENSE
-   One entry per `.slot[data-ad]` in the markup. Each carries the unit's own id,
-   the inline style Google's snippet for that unit specifies, and its ad format.
-   The rails are fixed 160x600 skyscrapers; the unit under "Get Updated" is a
-   Multiplex unit, which sizes itself and so must not be given a height.
+   One entry per `.slot[data-ad]` in the markup: the unit's id, the inline style
+   from its own snippet, and its ad format. There is one unit, below the page.
    Leave `pub` empty and initAds() does nothing — the page then carries no ad
-   boxes at all. The loader script itself lives in <head>, because it doubles as
-   the site-verification tag and Google asks for that one in the HTML.
+   boxes at all. The loader script itself lives in the page head, because it
+   doubles as the site-verification tag and Google asks for that one in the HTML.
+
+   `banner` is currently the Multiplex unit, which draws a grid of recommended
+   content and sizes itself to the number of cards. To put a plain display ad
+   there instead, make a Display unit in AdSense (they are responsive by
+   default, so it fills whatever width this slot has, phones included), then
+   replace the id below and drop the `format` line. Nothing else changes.
 --------------------------------------------------------------------------- */
 var ADSENSE = {
   pub: 'ca-pub-3965216469889452',
-  railLeft:  { id: '7805465601', style: 'display:inline-block;width:160px;height:600px' },
-  railRight: { id: '7271735257', style: 'display:inline-block;width:160px;height:600px' },
-  banner:    { id: '6237855181', style: 'display:block', format: 'autorelaxed' }
+  banner: { id: '6237855181', style: 'display:block', format: 'autorelaxed' }
 };
 
 (function () {
@@ -1358,8 +1342,8 @@ var ADSENSE = {
   // ------------------------------------------------------------ ad units
   (function initAds() {
     if (!ADSENSE || !ADSENSE.pub) return;          // nothing loads until it is set
-    // `ads` on the body is what gives the rails and the banner their space, so
-    // the page carries no empty boxes until there is something real to put in.
+    // `ads` on the body is what gives the slot its space, so the page carries
+    // no empty box until there is something real to put in it.
     document.body.className = (document.body.className + ' ads').trim();
     // The loader lives in <head>; see the note there. Nothing to inject here.
 
